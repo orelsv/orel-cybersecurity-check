@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orel-cybersecurity-check"
+version = "0.1.0"
+description = "oscan — a manual, authorized self-assessment scanner for web apps and sites (vulnerabilities + GDPR), with secure-by-default guidance."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "orelsv" }]
+keywords = ["security", "pentest", "gdpr", "scanner", "dast", "self-assessment"]
+
+dependencies = [
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "rich>=13.7",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Optional Claude-powered plain-language enrichment of findings.
+ai = ["anthropic>=0.40"]
+# Dev / test tooling.
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+oscan = "oscan.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/orelsv/orel-cybersecurity-check"
+
+[tool.setuptools.packages.find]
+include = ["oscan*"]
+
+[tool.setuptools.package-data]
+oscan = ["data/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

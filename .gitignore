@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+# scanner output / state
+report.json
+report.md
+*.report.json
+.oscan/
+.DS_Store
+.env
