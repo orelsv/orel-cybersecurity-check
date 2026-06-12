@@ -9,8 +9,11 @@ with — SQL injection, secrets in git history, weak cookies/tokens, an exposed
 Detection is deterministic (in code); an optional Claude layer only rewrites
 findings into plain language. The tool works fully offline without it.
 
-> Companion to the [`orel_cybersecurity_check`](https://github.com/orelsv/claude-skills)
-> Claude Code skill, which drives this scanner and adds secure-by-default build guidance.
+This repo ships **both** pieces:
+- **`oscan`** — the scanner (this README).
+- **`orel_cybersecurity_check`** — a [Claude Code](https://claude.com/claude-code)
+  skill (in [`skill/`](skill/orel_cybersecurity_check/SKILL.md)) that drives `oscan`
+  and adds secure-by-default build guidance. See [Claude Code skill](#claude-code-skill) below.
 
 ## ⚠️ Authorization & ethics
 
@@ -94,6 +97,21 @@ If the `anthropic` package is installed and `ANTHROPIC_API_KEY` is set, each
 finding gets a one-sentence plain-language explanation. Detection is unchanged —
 Claude is only a presentation layer. Disable with `--no-enrich`; pick a model
 with `OSCAN_ENRICH_MODEL` (default `claude-haiku-4-5`).
+
+## Claude Code skill
+
+The `orel_cybersecurity_check` skill lets [Claude Code](https://claude.com/claude-code)
+build apps securely by default and drive `oscan` to audit existing ones. Install
+it globally (one line):
+
+```bash
+mkdir -p ~/.claude/skills && curl -sL https://github.com/orelsv/orel-cybersecurity-check/archive/main.tar.gz | tar -xz --strip-components=2 -C ~/.claude/skills orel-cybersecurity-check-main/skill/orel_cybersecurity_check
+```
+
+Then restart your Claude Code session. The skill is at
+[`skill/orel_cybersecurity_check/SKILL.md`](skill/orel_cybersecurity_check/SKILL.md).
+For a project-local install instead of global, replace `~/.claude/skills` with
+`.claude/skills` in your project root.
 
 ## Development
 
