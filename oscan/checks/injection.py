@@ -1,15 +1,17 @@
 """Injection probes (active profile, non-destructive).
 
 We only ever send *detection markers*: a reflected string to spot XSS, a single
-quote / boolean pair to spot SQL handling, a traversal marker, and a redirect
-marker. There are no destructive payloads (no DROP, no stacked queries) and the
-shared HTTP throttle keeps the request rate gentle.
+quote / boolean pair to spot SQL handling, a read-only time-delay payload to spot
+blind SQLi, a traversal marker, and a redirect marker. There are no destructive
+payloads (no DROP, no stacked writes) and the shared HTTP throttle keeps the
+request rate gentle.
 """
 
 from __future__ import annotations
 
 import re
 import secrets
+import time
 from urllib.parse import parse_qsl, urljoin, urlparse, urlunparse
 
 from bs4 import BeautifulSoup
@@ -20,6 +22,9 @@ from ..core.registry import check
 
 CATEGORY = "Injection & input"
 _MAX_POINTS = 6
+# Time-based blind SQLi is slow (each probe waits out a server-side sleep), so
+# only run it on the first few injection points.
+_TIMING_MAX_POINTS = 3
 
 _SQL_ERRORS = re.compile(
     r"(SQL syntax|mysql_fetch|mysqli?_|ORA-\d{5}|PostgreSQL.*ERROR|SQLite3?::|"
@@ -76,17 +81,27 @@ def check_injection(ctx: ScanContext) -> list[Finding]:
         )]
 
     findings: list[Finding] = []
-    for url in points:
+    for i, url in enumerate(points):
         parsed, params = _split(url)
         for name in list(params.keys()):
-            findings.extend(_probe_param(ctx, parsed, params, name))
+            findings.extend(_probe_param(ctx, parsed, params, name,
+                                         do_timing=(i < _TIMING_MAX_POINTS)))
     if not findings:
         findings.append(passed("INJ-001", "No reflected XSS / SQL error signatures detected", CATEGORY,
                                location=ctx.target.url))
     return findings
 
 
-def _probe_param(ctx: ScanContext, parsed, params: dict, name: str) -> list[Finding]:
+def _time_payloads(orig: str, delay) -> list[str]:
+    """Read-only time-delay payloads (MySQL / PostgreSQL). No data is written."""
+    return [
+        f"{orig}' AND SLEEP({delay})-- -",
+        f"{orig}'; SELECT pg_sleep({delay})-- -",
+        f"{orig}'||(SELECT pg_sleep({delay}))||'",
+    ]
+
+
+def _probe_param(ctx: ScanContext, parsed, params: dict, name: str, do_timing: bool = False) -> list[Finding]:
     findings: list[Finding] = []
     where = f"{parsed.path or '/'}?{name}="
 
@@ -156,4 +171,48 @@ def _probe_param(ctx: ScanContext, parsed, params: dict, name: str) -> list[Find
         except Exception:
             pass
 
+    # 5. Time-based blind SQLi — read-only delay, no error message needed.
+    if do_timing:
+        findings.extend(_probe_time_based(ctx, parsed, params, name, where))
+
     return findings
+
+
+def _probe_time_based(ctx: ScanContext, parsed, params: dict, name: str, where: str) -> list[Finding]:
+    """Detect blind SQLi by injecting a server-side sleep and measuring the delay.
+
+    Read-only: the payloads only call SLEEP/pg_sleep, never modify data. Gentle:
+    one baseline request plus a few delay probes, capped to a few endpoints.
+    """
+    delay = float(ctx.option("sqli_delay", 3.0))
+    threshold = float(ctx.option("sqli_threshold", 2.5))
+
+    try:
+        t0 = time.monotonic()
+        ctx.http.get(_with_params(parsed, dict(params)))
+        baseline = time.monotonic() - t0
+    except Exception:
+        return []
+    # If the normal response is already slower than our delay, timing is unreliable.
+    if baseline >= delay:
+        return []
+
+    for payload in _time_payloads(params[name], delay):
+        p = dict(params); p[name] = payload
+        try:
+            t0 = time.monotonic()
+            ctx.http.get(_with_params(parsed, p))
+            elapsed = time.monotonic() - t0
+        except Exception:
+            continue
+        if elapsed - baseline >= threshold:
+            return [Finding(
+                id="INJ-SQL-TIME", title=f"Time-based blind SQL injection in '{name}'",
+                severity=Severity.CRITICAL, category=CATEGORY, location=where,
+                evidence=f"Injected sleep({delay}) delayed the response by {elapsed - baseline:.1f}s",
+                why="A SLEEP payload that reaches the database means an attacker can read or modify "
+                    "all data even when no error or output is visible (blind injection).",
+                fix="Use parameterized queries / prepared statements; never build SQL by string concatenation.",
+                references=["https://owasp.org/www-community/attacks/Blind_SQL_Injection"],
+            )]
+    return []

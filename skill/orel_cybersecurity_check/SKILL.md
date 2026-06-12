@@ -1,6 +1,34 @@
 ---
 name: orel_cybersecurity_check
 description: Build apps securely from the start AND check already-built sites/apps for vulnerabilities + GDPR. Use when the user is creating an app with AI and wants it secure by default, or wants to audit an existing site/web app/repo (SQLi, secrets in git history, weak cookies/tokens, exposed .git/.env, missing headers, rate-limiting/lockout, GDPR). Drives the `oscan` scanner that ships in this same repo.
+domain: cybersecurity
+subdomain: web-application-security
+tags:
+- web-app-security
+- dast
+- secure-by-default
+- gdpr
+- privacy
+- secrets-scanning
+- authorized-testing
+owasp:
+- A01-broken-access-control
+- A02-cryptographic-failures
+- A03-injection
+- A05-security-misconfiguration
+- A07-identification-and-authentication-failures
+nist_csf:
+- ID.RA-01
+- PR.DS-01
+- PR.AA-01
+- PR.PS-01
+- DE.CM-01
+mitre_attack:
+- T1190
+- T1552
+- T1078
+version: '0.1'
+license: MIT
 ---
 
 # Orel Cybersecurity Check

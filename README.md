@@ -81,7 +81,7 @@ oscan https://your-site.example --profile active --i-am-authorized \
 - **Cookies & tokens** — Secure / HttpOnly / SameSite flags, JWT in cookies, tokens in URLs
 - **Secrets & git** — working tree **and full git history** (committed-then-deleted secrets), `.gitignore` coverage
 - **Exposed files** — `/.git`, `/.env`, config/backup files, source maps
-- **Injection** *(active)* — SQLi (error/marker), reflected XSS, path traversal, open redirect
+- **Injection** *(active)* — SQLi (error-based + **time-based blind**), reflected XSS, path traversal, open redirect
 - **Auth hardening** *(active)* — JWT hygiene, unauthenticated admin/debug endpoints, login rate-limiting/lockout
 - **DoS resilience** — WAF/CDN/rate-limit presence + a capped burst to confirm throttling
 - **GDPR / privacy** — consent before tracking, third-party trackers, Google Fonts, privacy policy, PII over HTTP

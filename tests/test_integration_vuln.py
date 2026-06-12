@@ -4,7 +4,9 @@ Covers the full active path end-to-end: reflected XSS, SQL error, an exposed
 admin endpoint, and weak cookie/header hygiene — without any external target.
 """
 
+import re
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -31,12 +33,23 @@ class _VulnHandler(BaseHTTPRequestHandler):
 
         if path == "/":
             body = ('<html><body><h1>Shop</h1>'
-                    '<a href="/search?q=test">search</a></body></html>')
+                    '<a href="/search?q=test">search</a>'
+                    '<a href="/blind?id=1">item</a></body></html>')
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
             self.send_header("Set-Cookie", "sid=abc123; Path=/")  # no HttpOnly/SameSite
             self.end_headers()
             self.wfile.write(body.encode())
+        elif path == "/blind":
+            # Pure blind SQLi: a sleep payload delays the response, but nothing is
+            # reflected and no SQL error is ever returned.
+            ident = qs.get("id", [""])[0]
+            if re.search(r"(SLEEP|pg_sleep)\(", ident, re.I):
+                time.sleep(0.6)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            self.wfile.write(b"<html><body>ok</body></html>")
         elif path == "/search":
             # Reflect q unencoded (XSS) and emit a SQL error when a quote appears.
             body = f"<html><body>Results for: {q}</body></html>"
@@ -91,6 +104,17 @@ def test_reflected_xss_and_sql_detected(vuln_server):
         ctx.http.close()
     assert "INJ-XSS" in ids
     assert "INJ-SQL" in ids
+
+
+def test_time_based_blind_sqli_detected(vuln_server):
+    ctx = _ctx(vuln_server)
+    # Small delay/threshold so the test is fast (server sleeps 0.6s on /blind).
+    ctx.options = {"sqli_delay": 0.5, "sqli_threshold": 0.4}
+    try:
+        ids = {f.id for f in check_injection(ctx)}
+    finally:
+        ctx.http.close()
+    assert "INJ-SQL-TIME" in ids
 
 
 def test_exposed_admin_endpoint(vuln_server):
