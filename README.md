@@ -81,8 +81,10 @@ oscan https://your-site.example --profile active --i-am-authorized \
 - **Cookies & tokens** — Secure / HttpOnly / SameSite flags, JWT in cookies, tokens in URLs
 - **Secrets & git** — working tree **and full git history** (committed-then-deleted secrets), `.gitignore` coverage
 - **Exposed files** — `/.git`, `/.env`, config/backup files, source maps
-- **Injection** *(active)* — SQLi (error-based + **time-based blind**), reflected XSS, path traversal, open redirect
-- **Auth hardening** *(active)* — JWT hygiene, unauthenticated admin/debug endpoints, login rate-limiting/lockout
+- **CORS** *(standard)* — arbitrary-origin reflection, wildcard-with-credentials
+- **API security** *(standard)* — exposed OpenAPI/Swagger docs, GraphQL introspection, excessive data exposure (sensitive fields in JSON), verbose error/stack-trace disclosure
+- **Injection** *(active)* — SQLi (error-based + **time-based blind**), **NoSQL** injection, reflected XSS, path traversal, open redirect, **SSRF** (cloud-metadata)
+- **Auth hardening** *(active)* — JWT hygiene (`alg=none`, HMAC alg-confusion risk, empty signature, no-exp, sensitive claims), unauthenticated admin/debug endpoints, login rate-limiting/lockout
 - **DoS resilience** — WAF/CDN/rate-limit presence + a capped burst to confirm throttling
 - **GDPR / privacy** — consent before tracking, third-party trackers, Google Fonts, privacy policy, PII over HTTP
 

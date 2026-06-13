@@ -87,6 +87,21 @@ State which ones apply, then implement them — don't just list them.
 - Cookie-consent banner BEFORE non-essential cookies/trackers.
 - Linked privacy policy; data minimization; self-host fonts (don't load Google
   Fonts from Google — the German Schrems issue); PII only over HTTPS.
+- Map the build to the GDPR articles that imply technical controls:
+
+  | Article | What to build |
+  |---|---|
+  | Art. 5 | Data minimization, purpose limitation, storage limitation — collect/keep only what's needed, set retention/TTL. |
+  | Art. 6 | A lawful basis per processing activity (consent, contract, legitimate interest); record which. |
+  | Art. 25 | Data protection by design & by default — privacy-preserving defaults, least data exposed. |
+  | Art. 30 | Records of Processing Activities (ROPA) — keep an inventory of what data you process and why. |
+  | Art. 32 | Security of processing — encryption in transit & at rest, access control, the hardening in this skill. |
+  | Art. 33/34 | Breach notification — be able to detect and report a breach to the authority within **72 hours**. |
+  | Art. 35 | DPIA for high-risk processing (large-scale profiling, special-category data). |
+  | Art. 15-22 | Data subject rights — build endpoints/processes for access (DSAR), rectification, erasure, portability. |
+
+  Don't over-engineer for a hobby project; do apply Art. 5/6/25/32 (minimization,
+  lawful basis, privacy-by-default, encryption) as the baseline for anything with real users.
 
 ## Mode B — Check-time (audit an existing target)
 

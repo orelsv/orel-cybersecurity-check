@@ -72,6 +72,28 @@ def check_jwt(ctx: ScanContext) -> list[Finding]:
                 why="JWT payloads are only base64 (not encrypted); anyone can read these values.",
                 fix="Never put secrets/PII in a JWT payload; keep only an opaque user id.",
             ))
+
+        alg = str(header.get("alg", "")).upper()
+        parts = token.split(".")
+        sig = parts[2] if len(parts) > 2 else ""
+        if alg.startswith("HS"):
+            findings.append(Finding(
+                id="JWT-004", title=f"JWT signed with symmetric HMAC ({alg})",
+                severity=Severity.MEDIUM, category=CATEGORY, location=ctx.target.url,
+                why="HMAC keys are shared secrets: a leaked/weak secret forges any token, and servers "
+                    "that accept multiple algorithms are open to RS256→HS256 confusion (the public key is "
+                    "used as the HMAC secret).",
+                fix="Prefer asymmetric signing (RS256/EdDSA); pin one expected algorithm and reject all others; "
+                    "use a long, random HMAC secret if HMAC is required.",
+                references=["https://portswigger.net/web-security/jwt/algorithm-confusion"],
+            ))
+        if not sig and alg != "NONE":
+            findings.append(Finding(
+                id="JWT-005", title="JWT has an empty signature",
+                severity=Severity.HIGH, category=CATEGORY, location=ctx.target.url,
+                why="A token whose signature segment is empty is effectively unsigned and can be tampered with.",
+                fix="Ensure tokens are signed and the server verifies the signature before trusting claims.",
+            ))
     return findings
 
 

@@ -16,6 +16,8 @@ from oscan.checks.headers import check_security_headers
 from oscan.checks.cookies import check_cookies
 from oscan.checks.injection import check_injection
 from oscan.checks.auth import check_admin_endpoints
+from oscan.checks.cors import check_cors
+from oscan.checks.api import check_api_docs, check_excessive_data, check_verbose_errors
 from oscan.core.context import ScanContext, Target
 from oscan.core.http import HttpClient
 from oscan.core.finding import Severity
@@ -24,6 +26,19 @@ from oscan.core.finding import Severity
 class _VulnHandler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
+
+    def _send(self, code, ctype, body, extra=None):
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        # Vulnerable CORS: reflect any Origin.
+        origin = self.headers.get("Origin")
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
+        for k, v in (extra or []):
+            self.send_header(k, v)
+        self.end_headers()
+        self.wfile.write(body if isinstance(body, bytes) else body.encode())
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -34,12 +49,31 @@ class _VulnHandler(BaseHTTPRequestHandler):
         if path == "/":
             body = ('<html><body><h1>Shop</h1>'
                     '<a href="/search?q=test">search</a>'
-                    '<a href="/blind?id=1">item</a></body></html>')
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.send_header("Set-Cookie", "sid=abc123; Path=/")  # no HttpOnly/SameSite
-            self.end_headers()
-            self.wfile.write(body.encode())
+                    '<a href="/blind?id=1">item</a>'
+                    '<a href="/nosql?q=x">find</a>'
+                    '<a href="/fetch?url=x">load</a></body></html>')
+            self._send(200, "text/html", body, extra=[("Set-Cookie", "sid=abc123; Path=/")])
+        elif path == "/swagger.json":
+            self._send(200, "application/json", b'{"openapi":"3.0.0","paths":{}}')
+        elif path == "/api/users":
+            self._send(200, "application/json",
+                       b'[{"id":1,"name":"alice","password_hash":"$2b$10$abc","ssn":"111-22-3333"}]')
+        elif path == "/nosql":
+            body = "<html><body>ok</body></html>"
+            if any(c in q for c in ('"', "{", "\\")):
+                body = "MongoServerError: unknown operator: $oscan"
+            self._send(200, "text/html", body)
+        elif path == "/fetch":
+            url = qs.get("url", [""])[0]
+            if "169.254.169.254" in url or "metadata.google" in url:
+                self._send(200, "text/plain", "instance-id: i-0abc\nami-id: ami-123")
+            else:
+                self._send(200, "text/html", "<html><body>ok</body></html>")
+        elif path.startswith("/oscan-nonexistent"):
+            # Verbose error / stack trace.
+            self._send(500, "text/html",
+                       "<html><body><h2>Werkzeug Debugger</h2>"
+                       "Traceback (most recent call last):\n  File app.py line 42</body></html>")
         elif path == "/blind":
             # Pure blind SQLi: a sleep payload delays the response, but nothing is
             # reflected and no SQL error is ever returned.
@@ -125,3 +159,43 @@ def test_exposed_admin_endpoint(vuln_server):
         ctx.http.close()
     serious = [f for f in findings if f.severity is Severity.HIGH]
     assert any(f.id == "AUTH-001" for f in serious)
+
+
+def test_nosqli_and_ssrf_detected(vuln_server):
+    ctx = _ctx(vuln_server)
+    try:
+        ids = {f.id for f in check_injection(ctx)}
+    finally:
+        ctx.http.close()
+    assert "INJ-NOSQL" in ids
+    assert "INJ-SSRF" in ids
+
+
+def test_cors_reflection_flagged(vuln_server):
+    ctx = _ctx(vuln_server)
+    try:
+        findings = check_cors(ctx)
+    finally:
+        ctx.http.close()
+    f = {x.id: x for x in findings}
+    assert "CORS-001" in f and f["CORS-001"].severity is Severity.HIGH
+
+
+def test_api_docs_and_verbose_errors(vuln_server):
+    ctx = _ctx(vuln_server)
+    try:
+        doc_ids = {f.id for f in check_api_docs(ctx) if f.severity is not Severity.INFO}
+        err_ids = {f.id for f in check_verbose_errors(ctx)}
+    finally:
+        ctx.http.close()
+    assert "API-001" in doc_ids     # exposed swagger.json
+    assert "API-004" in err_ids     # stack trace
+
+
+def test_excessive_data_exposure(vuln_server):
+    ctx = _ctx(vuln_server + "/api/users")
+    try:
+        ids = {f.id for f in check_excessive_data(ctx)}
+    finally:
+        ctx.http.close()
+    assert "API-003" in ids

@@ -34,6 +34,8 @@ _CHECK_MODULES = [
     "oscan.checks.exposure",
     "oscan.checks.secrets_git",
     "oscan.checks.gdpr",
+    "oscan.checks.cors",
+    "oscan.checks.api",
     "oscan.checks.injection",
     "oscan.checks.auth",
     "oscan.checks.dos_resilience",

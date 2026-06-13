@@ -53,10 +53,11 @@ class HttpClient:
             time.sleep(self.min_interval - delta)
         self._last = time.monotonic()
 
-    def get(self, url: str, *, follow_redirects: bool = False, params: dict | None = None):
+    def get(self, url: str, *, follow_redirects: bool = False, params: dict | None = None,
+            headers: dict | None = None):
         self._throttle()
         self.request_count += 1
-        return self._client.get(url, follow_redirects=follow_redirects, params=params)
+        return self._client.get(url, follow_redirects=follow_redirects, params=params, headers=headers)
 
     def post(self, url: str, *, data: dict | None = None, follow_redirects: bool = False):
         self._throttle()

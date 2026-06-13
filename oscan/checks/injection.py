@@ -32,6 +32,17 @@ _SQL_ERRORS = re.compile(
     r"Microsoft OLE DB Provider for SQL Server|Warning: pg_)",
     re.I,
 )
+_NOSQL_ERRORS = re.compile(
+    r"(MongoError|MongoServerError|Mongoose|CastError|BSONError|"
+    r"unexpected token.*in JSON|E11000|couchdb|unknown operator)",
+    re.I,
+)
+# Params whose value is likely fetched server-side (SSRF surface).
+_SSRF_PARAMS = {"url", "uri", "link", "src", "source", "dest", "target", "callback",
+                "webhook", "image", "img", "fetch", "proxy", "to", "feed", "u"}
+# Signatures of cloud instance-metadata responses (SSRF confirmation).
+_METADATA_RE = re.compile(r"(ami-id|instance-id|iam/security-credentials|"
+                          r"computeMetadata|meta-data/|access_key)", re.I)
 
 
 def _split(url: str):
@@ -139,6 +150,22 @@ def _probe_param(ctx: ScanContext, parsed, params: dict, name: str, do_timing: b
     except Exception:
         pass
 
+    # 2b. NoSQL injection — error-based (Mongo/Mongoose/CouchDB signatures).
+    p = dict(params); p[name] = params[name] + '\'"\\{'
+    try:
+        body = ctx.http.get(_with_params(parsed, p)).text or ""
+        if _NOSQL_ERRORS.search(body):
+            findings.append(Finding(
+                id="INJ-NOSQL", title=f"NoSQL error triggered in '{name}' (possible NoSQL injection)",
+                severity=Severity.CRITICAL, category=CATEGORY, location=where,
+                evidence="NoSQL database error returned after injecting operator characters",
+                why="Unsanitized input reaching a NoSQL query (e.g. Mongo) lets an attacker bypass auth or read data.",
+                fix="Validate/cast input types, reject query operators ($ne/$gt/$where) in user data, use an ODM safely.",
+                references=["https://owasp.org/www-community/Injection_Flaws"],
+            ))
+    except Exception:
+        pass
+
     # 3. Path traversal marker.
     p = dict(params); p[name] = "../../../../etc/passwd"
     try:
@@ -171,7 +198,28 @@ def _probe_param(ctx: ScanContext, parsed, params: dict, name: str, do_timing: b
         except Exception:
             pass
 
-    # 5. Time-based blind SQLi — read-only delay, no error message needed.
+    # 5. SSRF — only for URL-like params; check for cloud-metadata leakage.
+    if name.lower() in _SSRF_PARAMS:
+        for probe in ("http://169.254.169.254/latest/meta-data/",
+                      "http://metadata.google.internal/computeMetadata/v1/"):
+            p = dict(params); p[name] = probe
+            try:
+                body = ctx.http.get(_with_params(parsed, p)).text or ""
+            except Exception:
+                continue
+            if _METADATA_RE.search(body):
+                findings.append(Finding(
+                    id="INJ-SSRF", title=f"Server-Side Request Forgery via '{name}'",
+                    severity=Severity.CRITICAL, category=CATEGORY, location=where,
+                    evidence="Cloud instance-metadata content was returned through the parameter",
+                    why="The server fetches attacker-supplied URLs, exposing internal services and cloud "
+                        "credentials (e.g. the metadata endpoint).",
+                    fix="Allowlist outbound hosts, block link-local/internal ranges, and disable unused URL fetching.",
+                    references=["https://owasp.org/www-community/attacks/Server_Side_Request_Forgery"],
+                ))
+                break
+
+    # 6. Time-based blind SQLi — read-only delay, no error message needed.
     if do_timing:
         findings.extend(_probe_time_based(ctx, parsed, params, name, where))
 
