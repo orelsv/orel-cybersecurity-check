@@ -80,7 +80,7 @@ def enrich_findings(findings: List[Finding]) -> None:
 
 def _parse(text: str) -> dict:
     """Defensively pull the JSON array out of the model response (it may add prose
-    or code fences despite instructions — the Entra project's hard-won lesson)."""
+    or code fences despite instructions - the Entra project's hard-won lesson)."""
     text = text.strip()
     if "```" in text:
         # strip a ```json ... ``` fence if present

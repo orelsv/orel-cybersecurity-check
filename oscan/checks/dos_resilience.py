@@ -1,4 +1,4 @@
-"""DoS-resilience checks — NOT a DDoS tool.
+"""DoS-resilience checks - NOT a DDoS tool.
 
 The goal is to confirm that *defenses exist*: rate-limiting headers / a WAF / a
 CDN, and that a short, hard-capped burst of requests starts getting throttled

@@ -1,4 +1,4 @@
-"""Prove the repo scanner finds a secret that was committed and then deleted —
+"""Prove the repo scanner finds a secret that was committed and then deleted -
 i.e. it lives only in git history, not the working tree."""
 
 import subprocess

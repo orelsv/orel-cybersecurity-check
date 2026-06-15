@@ -45,7 +45,7 @@ def _redact(secret: str) -> str:
     secret = secret.strip()
     if len(secret) <= 8:
         return "****"
-    return f"{secret[:4]}…{secret[-2:]} ({len(secret)} chars)"
+    return f"{secret[:4]}...{secret[-2:]} ({len(secret)} chars)"
 
 
 def _severity_for(rule: str) -> Severity:
@@ -136,7 +136,7 @@ def _run_builtin(repo: Path) -> list[Finding]:
                 fix="Remove it, rotate the secret, move it to env/secrets manager, and add the file to .gitignore.",
             ))
 
-    # History (capped) — find secrets that may have been deleted but persist in commits.
+    # History (capped) - find secrets that may have been deleted but persist in commits.
     if _is_git_repo(repo):
         try:
             proc = subprocess.Popen(

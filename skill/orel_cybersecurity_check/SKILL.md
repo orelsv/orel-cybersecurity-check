@@ -36,7 +36,7 @@ license: MIT
 A lot of sites and apps are now generated with AI and ship with the same holes:
 SQL injection, secrets committed to git history, missing security headers,
 cookies without Secure/HttpOnly/SameSite, an exposed `.git` or `.env`, no
-rate-limiting, and no GDPR basics. This skill has **two modes** — build it right
+rate-limiting, and no GDPR basics. This skill has **two modes** - build it right
 from the start, and check what already exists. It ships alongside the `oscan`
 scanner in this repo (see the root `README.md` to install `oscan`).
 
@@ -44,20 +44,20 @@ scanner in this repo (see the root `README.md` to install `oscan`).
 > to test. Intrusive checks require an authorization flag (see the scanner's
 > `--i-am-authorized`). This is self-assessment / authorized testing / learning,
 > never offensive use against third parties. There is no DDoS flooder and no
-> password cracker here — "DoS" means verifying rate-limiting exists, and
+> password cracker here - "DoS" means verifying rate-limiting exists, and
 > "brute force" means verifying lockout exists.
 
 This skill complements, not duplicates, a white-box source-reading review. Use a
 code/IaC review skill for deep source audits; use this skill for (a) secure-by-default
 build guidance and (b) driving the black-box `oscan` scanner + GDPR.
 
-## Mode A — Build-time (secure by default)
+## Mode A - Build-time (secure by default)
 
 When the user is creating a site/app/API with AI, bake these in from the start.
-State which ones apply, then implement them — don't just list them.
+State which ones apply, then implement them - don't just list them.
 
 **Injection & input**
-- Parameterized queries / prepared statements ONLY — never build SQL by string
+- Parameterized queries / prepared statements ONLY - never build SQL by string
   concatenation. Same for shell commands and file paths (allowlist + canonicalize).
 - Validate input at trust boundaries; context-encode all output (HTML-escape).
 
@@ -86,32 +86,32 @@ State which ones apply, then implement them — don't just list them.
 **GDPR / privacy (if any EU users or PII)**
 - Cookie-consent banner BEFORE non-essential cookies/trackers.
 - Linked privacy policy; data minimization; self-host fonts (don't load Google
-  Fonts from Google — the German Schrems issue); PII only over HTTPS.
+  Fonts from Google - the German Schrems issue); PII only over HTTPS.
 - Map the build to the GDPR articles that imply technical controls:
 
   | Article | What to build |
   |---|---|
-  | Art. 5 | Data minimization, purpose limitation, storage limitation — collect/keep only what's needed, set retention/TTL. |
+  | Art. 5 | Data minimization, purpose limitation, storage limitation - collect/keep only what's needed, set retention/TTL. |
   | Art. 6 | A lawful basis per processing activity (consent, contract, legitimate interest); record which. |
-  | Art. 25 | Data protection by design & by default — privacy-preserving defaults, least data exposed. |
-  | Art. 30 | Records of Processing Activities (ROPA) — keep an inventory of what data you process and why. |
-  | Art. 32 | Security of processing — encryption in transit & at rest, access control, the hardening in this skill. |
-  | Art. 33/34 | Breach notification — be able to detect and report a breach to the authority within **72 hours**. |
+  | Art. 25 | Data protection by design & by default - privacy-preserving defaults, least data exposed. |
+  | Art. 30 | Records of Processing Activities (ROPA) - keep an inventory of what data you process and why. |
+  | Art. 32 | Security of processing - encryption in transit & at rest, access control, the hardening in this skill. |
+  | Art. 33/34 | Breach notification - be able to detect and report a breach to the authority within **72 hours**. |
   | Art. 35 | DPIA for high-risk processing (large-scale profiling, special-category data). |
-  | Art. 15-22 | Data subject rights — build endpoints/processes for access (DSAR), rectification, erasure, portability. |
+  | Art. 15-22 | Data subject rights - build endpoints/processes for access (DSAR), rectification, erasure, portability. |
 
   Don't over-engineer for a hobby project; do apply Art. 5/6/25/32 (minimization,
   lawful basis, privacy-by-default, encryption) as the baseline for anything with real users.
 
-## Mode B — Check-time (audit an existing target)
+## Mode B - Check-time (audit an existing target)
 
 Drive the **`oscan`** scanner (in this repo), then interpret the results in
 plain language and produce a prioritized fix list.
 
 **Decide the profile (always start safe):**
-- `passive` (default) — observation only, safe to run on any URL you own.
-- `standard` — adds path enumeration and JWT analysis.
-- `active` — intrusive but non-destructive probes (SQLi/XSS markers, auth-lockout,
+- `passive` (default) - observation only, safe to run on any URL you own.
+- `standard` - adds path enumeration and JWT analysis.
+- `active` - intrusive but non-destructive probes (SQLi/XSS markers, auth-lockout,
   DoS-resilience burst). Requires `--i-am-authorized` + confirmation. Only on the
   user's own/authorized targets.
 
@@ -134,7 +134,7 @@ hygiene, login rate-limiting/lockout (active), WAF/rate-limit presence + a cappe
 resilience burst (active), and GDPR/privacy (consent, trackers, fonts, privacy policy).
 
 **Then:**
-1. Summarize the Risk Score (0–100) and the worst issues in plain language —
+1. Summarize the Risk Score (0-100) and the worst issues in plain language -
    what an attacker could actually do, for a non-expert.
 2. Give a prioritized remediation list: critical/high first, "quick wins" called out.
 3. Tie each fix back to the Mode A guidance above.
@@ -142,7 +142,7 @@ resilience burst (active), and GDPR/privacy (consent, trackers, fonts, privacy p
 
 ## Rules
 - Never invent findings. If the scan is clean, say so and suggest defense-in-depth.
-- Always explain WHY in plain language — the user is learning.
+- Always explain WHY in plain language - the user is learning.
 - Confirm authorization before any `active` scan; default to `passive`.
 - For deep source-code review, hand off to a dedicated code-review skill; for
   documenting the result, hand off to a lab-writeup skill.

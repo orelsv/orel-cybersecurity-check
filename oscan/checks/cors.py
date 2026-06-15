@@ -37,7 +37,7 @@ def check_cors(ctx: ScanContext) -> list[Finding]:
             id="CORS-001", title="CORS reflects an arbitrary Origin",
             severity=sev, category=CATEGORY, location=url,
             evidence=f"Access-Control-Allow-Origin: {acao}" + (" + Allow-Credentials: true" if acac == "true" else ""),
-            why="Any website can read this site's responses on behalf of a logged-in user — "
+            why="Any website can read this site's responses on behalf of a logged-in user - "
                 "with credentials enabled, that means stealing private data.",
             fix="Allowlist trusted origins explicitly; never reflect the request Origin; "
                 "don't combine a wildcard/reflected origin with Allow-Credentials: true.",

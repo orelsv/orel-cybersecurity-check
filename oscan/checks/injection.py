@@ -116,7 +116,7 @@ def _probe_param(ctx: ScanContext, parsed, params: dict, name: str, do_timing: b
     findings: list[Finding] = []
     where = f"{parsed.path or '/'}?{name}="
 
-    # 1. Reflected XSS — benign marker with meaningful characters.
+    # 1. Reflected XSS - benign marker with meaningful characters.
     marker = "oscan" + secrets.token_hex(3)
     xss_payload = f'{marker}\'"<b>'
     p = dict(params); p[name] = xss_payload
@@ -134,7 +134,7 @@ def _probe_param(ctx: ScanContext, parsed, params: dict, name: str, do_timing: b
     except Exception:
         pass
 
-    # 2. SQL error-based — a single quote.
+    # 2. SQL error-based - a single quote.
     p = dict(params); p[name] = params[name] + "'"
     try:
         body = ctx.http.get(_with_params(parsed, p)).text or ""
@@ -150,7 +150,7 @@ def _probe_param(ctx: ScanContext, parsed, params: dict, name: str, do_timing: b
     except Exception:
         pass
 
-    # 2b. NoSQL injection — error-based (Mongo/Mongoose/CouchDB signatures).
+    # 2b. NoSQL injection - error-based (Mongo/Mongoose/CouchDB signatures).
     p = dict(params); p[name] = params[name] + '\'"\\{'
     try:
         body = ctx.http.get(_with_params(parsed, p)).text or ""
@@ -198,7 +198,7 @@ def _probe_param(ctx: ScanContext, parsed, params: dict, name: str, do_timing: b
         except Exception:
             pass
 
-    # 5. SSRF — only for URL-like params; check for cloud-metadata leakage.
+    # 5. SSRF - only for URL-like params; check for cloud-metadata leakage.
     if name.lower() in _SSRF_PARAMS:
         for probe in ("http://169.254.169.254/latest/meta-data/",
                       "http://metadata.google.internal/computeMetadata/v1/"):
@@ -219,7 +219,7 @@ def _probe_param(ctx: ScanContext, parsed, params: dict, name: str, do_timing: b
                 ))
                 break
 
-    # 6. Time-based blind SQLi — read-only delay, no error message needed.
+    # 6. Time-based blind SQLi - read-only delay, no error message needed.
     if do_timing:
         findings.extend(_probe_time_based(ctx, parsed, params, name, where))
 

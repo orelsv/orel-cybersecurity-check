@@ -91,7 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--insecure", action="store_true", help="do not verify TLS certificates (testing only)")
     p.add_argument("--min-interval", type=float, default=0.3, help="seconds between requests (throttle)")
     p.add_argument("--dos-burst", type=int, default=30, help="request count for the DoS-resilience check (hard-capped at 50)")
-    # Login lockout check (active) — supply your OWN test account.
+    # Login lockout check (active) - supply your OWN test account.
     p.add_argument("--login-url", help="login form POST URL (enables the lockout check)")
     p.add_argument("--login-user", help="username/email of YOUR test account for the lockout check")
     p.add_argument("--login-userfield", default="username", help="form field name for the username (default: username)")

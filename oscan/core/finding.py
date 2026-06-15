@@ -1,7 +1,7 @@
 """The single shape every check produces: a Finding.
 
 Detection logic lives in the checks and is fully deterministic. A Finding
-records WHAT was found, WHY it matters, and HOW to fix it — the optional
+records WHAT was found, WHY it matters, and HOW to fix it - the optional
 LLM layer only fills `enrichment`, never the severity or the evidence.
 """
 

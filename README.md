@@ -1,17 +1,21 @@
-# oscan — orel-cybersecurity-check
+# oscan - orel-cybersecurity-check
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-51%20passing-brightgreen.svg)](tests/)
 
 A manual, **authorized self-assessment** scanner for the sites, web apps, and
 repos people increasingly build with AI. It catches the holes those builds ship
-with — SQL injection, secrets in git history, weak cookies/tokens, an exposed
-`.git`/`.env`, missing security headers, no rate-limiting — and it checks
+with - SQL injection, secrets in git history, weak cookies/tokens, an exposed
+`.git`/`.env`, missing security headers, no rate-limiting - and it checks
 **GDPR/privacy** basics too.
 
 Detection is deterministic (in code); an optional Claude layer only rewrites
 findings into plain language. The tool works fully offline without it.
 
 This repo ships **both** pieces:
-- **`oscan`** — the scanner (this README).
-- **`orel_cybersecurity_check`** — a [Claude Code](https://claude.com/claude-code)
+- **`oscan`** - the scanner (this README).
+- **`orel_cybersecurity_check`** - a [Claude Code](https://claude.com/claude-code)
   skill (in [`skill/`](skill/orel_cybersecurity_check/SKILL.md)) that drives `oscan`
   and adds secure-by-default build guidance. See [Claude Code skill](#claude-code-skill) below.
 
@@ -28,7 +32,7 @@ for self-assessment, authorized pentesting, and learning.
   rate-limiting/WAF *exists* (a hard-capped burst); "auth hardening" verifies
   account *lockout* exists (a few failed logins on your own account). The goal is
   to confirm defenses work, not to attack.
-- All payloads are non-destructive detection markers — never `DROP`, never data
+- All payloads are non-destructive detection markers - never `DROP`, never data
   exfiltration.
 
 ## Install
@@ -76,27 +80,27 @@ oscan https://your-site.example --profile active --i-am-authorized \
 
 ### What it checks
 
-- **Transport & TLS** — HTTPS, TLS version, cert validity, HTTP→HTTPS redirect, HSTS
-- **Security headers** — CSP, X-Content-Type-Options, clickjacking protection, Referrer-Policy, version disclosure
-- **Cookies & tokens** — Secure / HttpOnly / SameSite flags, JWT in cookies, tokens in URLs
-- **Secrets & git** — working tree **and full git history** (committed-then-deleted secrets), `.gitignore` coverage
-- **Exposed files** — `/.git`, `/.env`, config/backup files, source maps
-- **CORS** *(standard)* — arbitrary-origin reflection, wildcard-with-credentials
-- **API security** *(standard)* — exposed OpenAPI/Swagger docs, GraphQL introspection, excessive data exposure (sensitive fields in JSON), verbose error/stack-trace disclosure
-- **Injection** *(active)* — SQLi (error-based + **time-based blind**), **NoSQL** injection, reflected XSS, path traversal, open redirect, **SSRF** (cloud-metadata)
-- **Auth hardening** *(active)* — JWT hygiene (`alg=none`, HMAC alg-confusion risk, empty signature, no-exp, sensitive claims), unauthenticated admin/debug endpoints, login rate-limiting/lockout
-- **DoS resilience** — WAF/CDN/rate-limit presence + a capped burst to confirm throttling
-- **GDPR / privacy** — consent before tracking, third-party trackers, Google Fonts, privacy policy, PII over HTTP
+- **Transport & TLS** - HTTPS, TLS version, cert validity, HTTP→HTTPS redirect, HSTS
+- **Security headers** - CSP, X-Content-Type-Options, clickjacking protection, Referrer-Policy, version disclosure
+- **Cookies & tokens** - Secure / HttpOnly / SameSite flags, JWT in cookies, tokens in URLs
+- **Secrets & git** - working tree **and full git history** (committed-then-deleted secrets), `.gitignore` coverage
+- **Exposed files** - `/.git`, `/.env`, config/backup files, source maps
+- **CORS** *(standard)* - arbitrary-origin reflection, wildcard-with-credentials
+- **API security** *(standard)* - exposed OpenAPI/Swagger docs, GraphQL introspection, excessive data exposure (sensitive fields in JSON), verbose error/stack-trace disclosure
+- **Injection** *(active)* - SQLi (error-based + **time-based blind**), **NoSQL** injection, reflected XSS, path traversal, open redirect, **SSRF** (cloud-metadata)
+- **Auth hardening** *(active)* - JWT hygiene (`alg=none`, HMAC alg-confusion risk, empty signature, no-exp, sensitive claims), unauthenticated admin/debug endpoints, login rate-limiting/lockout
+- **DoS resilience** - WAF/CDN/rate-limit presence + a capped burst to confirm throttling
+- **GDPR / privacy** - consent before tracking, third-party trackers, Google Fonts, privacy policy, PII over HTTP
 
 ### Output
 
-Console summary with a **Risk Score (0–100)**, a letter grade, and an estimated
+Console summary with a **Risk Score (0-100)**, a letter grade, and an estimated
 **time-to-compromise**, plus optional JSON (SIEM-friendly) and Markdown reports.
 
 ### Optional Claude enrichment
 
 If the `anthropic` package is installed and `ANTHROPIC_API_KEY` is set, each
-finding gets a one-sentence plain-language explanation. Detection is unchanged —
+finding gets a one-sentence plain-language explanation. Detection is unchanged -
 Claude is only a presentation layer. Disable with `--no-enrich`; pick a model
 with `OSCAN_ENRICH_MODEL` (default `claude-haiku-4-5`).
 
@@ -119,7 +123,7 @@ For a project-local install instead of global, replace `~/.claude/skills` with
 
 ```bash
 pip install -e ".[dev]"
-pytest                      # 42 tests, no network required
+pytest                      # 51 tests, no network required
 ```
 
 The test suite includes an end-to-end run against a deliberately vulnerable

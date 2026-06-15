@@ -1,7 +1,7 @@
 """Spin up a deliberately vulnerable local server and confirm oscan catches it.
 
 Covers the full active path end-to-end: reflected XSS, SQL error, an exposed
-admin endpoint, and weak cookie/header hygiene — without any external target.
+admin endpoint, and weak cookie/header hygiene - without any external target.
 """
 
 import re

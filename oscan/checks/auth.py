@@ -4,7 +4,7 @@
   alg=none / missing expiry / sensitive claims.
 - Admin endpoint exposure (active): GET a few well-known admin/debug paths and
   report ones that answer without authentication.
-- Login lockout (active): the *reframed* "brute force" — a hard-capped number
+- Login lockout (active): the *reframed* "brute force" - a hard-capped number
   of failed logins against an account YOU supply, purely to confirm that
   rate-limiting / lockout / CAPTCHA kicks in. It is not a password cracker.
 """

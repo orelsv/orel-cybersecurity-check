@@ -16,7 +16,7 @@ _EMOJI = {
 
 def build(target: str, profile: str, summary: ScanSummary, findings: List[Finding]) -> str:
     lines: list[str] = []
-    lines.append(f"# oscan report — {target}")
+    lines.append(f"# oscan report - {target}")
     lines.append("")
     lines.append(f"- **Scanned:** {time.strftime('%Y-%m-%d %H:%M:%S')}")
     lines.append(f"- **Profile:** {profile}")
@@ -33,7 +33,7 @@ def build(target: str, profile: str, summary: ScanSummary, findings: List[Findin
         lines.append("## Findings")
         lines.append("")
         for f in issues:
-            lines.append(f"### {_EMOJI[f.severity]} [{f.severity.value}] {f.id} — {f.title}")
+            lines.append(f"### {_EMOJI[f.severity]} [{f.severity.value}] {f.id} - {f.title}")
             if f.location:
                 lines.append(f"- **Where:** {f.location}")
             if f.evidence:
@@ -58,7 +58,7 @@ def build(target: str, profile: str, summary: ScanSummary, findings: List[Findin
         lines.append("## Controls in place / observations")
         lines.append("")
         for f in passed:
-            note = f" — {f.evidence}" if f.evidence else ""
+            note = f" - {f.evidence}" if f.evidence else ""
             lines.append(f"- ✅ {f.id}: {f.title}{note}")
         lines.append("")
 

@@ -1,4 +1,4 @@
-"""GDPR / privacy checks — all passive (just reading the served page).
+"""GDPR / privacy checks - all passive (just reading the served page).
 
 These are heuristics, not legal advice: they flag the patterns that most often
 make an EU site non-compliant (tracking before consent, no consent banner, no
