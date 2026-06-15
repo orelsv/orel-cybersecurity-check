@@ -63,6 +63,6 @@ def test_gitignore_complete_passes(tmp_path):
 def test_inline_allow_marker_suppresses():
     from oscan.checks.secrets_git import _scan_text
 
-    flagged = 'api_key = "abcd1234efgh5678ijkl9012mnop"'
+    flagged = 'api_key = "abcd1234efgh5678ijkl9012mnop"'  # gitleaks:allow
     assert _scan_text(flagged), "control: a bare fake key should be detected"
     assert not _scan_text(flagged + "  # gitleaks:allow"), "allow marker should suppress"

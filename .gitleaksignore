@@ -5,3 +5,6 @@
 db2d260da42e16d809e3e32b853bb37402737569:tests/test_secrets_git.py:generic-api-key:15
 8acf4318691af09ed141de2fedbbf1cac3bbdf22:tests/test_secrets_git.py:generic-api-key:16
 b8dca81cfc7bf971c3948d172987792e1e2b5f09:tests/test_secrets_git.py:generic-api-key:16
+# The allowlist test itself contains an unmarked control key (committed before
+# its inline marker was added); ignore that historical occurrence too.
+3049b8f49e332497842a563e46b0252551d3a7ca:tests/test_secrets_git.py:generic-api-key:66
