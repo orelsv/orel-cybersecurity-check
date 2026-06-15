@@ -4,22 +4,19 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project aims
 to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.1] - 2026-06-15
 
 ### Added
-- MIT `LICENSE` file so the project can be reused.
-- `SECURITY.md` with a private vulnerability-reporting and responsible-use policy.
-- GitHub Actions CI: `pytest` on Python 3.11, 3.12, and 3.13, plus `ruff` lint
-  and format checks.
-- `ruff` configuration and a `dev` dependency for it.
-- `CONTRIBUTING.md`.
-- PyPI packaging metadata (trove classifiers, project URLs, SPDX license) and a
-  release workflow that publishes to PyPI via Trusted Publishing on a version tag.
+- Secret-scan allowlist: lines marked `# gitleaks:allow`, `# pragma: allowlist
+  secret`, or `# oscan:allow` are skipped, and a scanned repo's own
+  `.gitleaksignore` is now honored.
+- `*.key` and `*.pem` to the project `.gitignore`.
 
-### Changed
-- Normalized punctuation to plain ASCII across source and docs.
+### Fixed
+- Repo scans no longer report a project's deliberately-fake test fixtures or
+  documented example secrets as real leaks (the scanner was flagging its own).
 
-## [0.1.0] - 2026-06-13
+## [0.1.0] - 2026-06-15
 
 ### Added
 - Initial release of `oscan`: an authorized self-assessment scanner for sites,
@@ -36,6 +33,9 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Optional Claude layer that rephrases findings into plain language; detection
   stays deterministic and works fully offline.
 - Bundled `orel_cybersecurity_check` Claude Code skill.
+- MIT `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, and this changelog.
+- GitHub Actions CI (`pytest` on Python 3.11-3.13, `ruff` lint/format) and a
+  PyPI release workflow using Trusted Publishing.
 
-[Unreleased]: https://github.com/orelsv/orel-cybersecurity-check/compare/v0.1.0...HEAD
+[0.1.1]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.1
 [0.1.0]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.0

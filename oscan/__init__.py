@@ -6,4 +6,4 @@ findings into plain language. Intended for your OWN assets or explicitly
 authorized targets - see oscan.core.safety.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"

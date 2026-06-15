@@ -101,7 +101,7 @@ oscan https://your-site.example --profile active --i-am-authorized \
 - **Transport & TLS** - HTTPS, TLS version, cert validity, HTTP→HTTPS redirect, HSTS
 - **Security headers** - CSP, X-Content-Type-Options, clickjacking protection, Referrer-Policy, version disclosure
 - **Cookies & tokens** - Secure / HttpOnly / SameSite flags, JWT in cookies, tokens in URLs
-- **Secrets & git** - working tree **and full git history** (committed-then-deleted secrets), `.gitignore` coverage
+- **Secrets & git** - working tree **and full git history** (committed-then-deleted secrets), `.gitignore` coverage. Allowlist a known/fake secret with an inline `# gitleaks:allow` (or `# pragma: allowlist secret`) marker, or a repo `.gitleaksignore`.
 - **Exposed files** - `/.git`, `/.env`, config/backup files, source maps
 - **CORS** *(standard)* - arbitrary-origin reflection, wildcard-with-credentials
 - **API security** *(standard)* - exposed OpenAPI/Swagger docs, GraphQL introspection, excessive data exposure (sensitive fields in JSON), verbose error/stack-trace disclosure

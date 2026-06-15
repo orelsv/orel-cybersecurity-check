@@ -9,11 +9,10 @@ from oscan.checks.secrets_git import check_gitignore, check_secrets
 from oscan.core.context import ScanContext, Target
 from oscan.core.finding import Severity
 
-# A secret in the form gitleaks reliably flags (generic-api-key) and that the
-# built-in fallback also matches (Generic assignment pattern).
-_SECRET_CONTENT = (
-    'DB_PASSWORD = "Sup3rSecretP@ssw0rd123"\napi_key = "abcd1234efgh5678ijkl9012mnop"\n'
-)
+# Deliberately fake credentials, written to a temp repo to prove the scanner
+# detects them. The trailing `# gitleaks:allow` stops the scanner from flagging
+# its own fixture in this source file - this is the allowlist feature, dogfooded.
+_SECRET_CONTENT = 'DB_PASSWORD = "Sup3rSecretP@ssw0rd123"\napi_key = "abcd1234efgh5678ijkl9012mnop"\n'  # gitleaks:allow
 
 
 def _git(repo, *args):
@@ -59,3 +58,11 @@ def test_gitignore_complete_passes(tmp_path):
     ctx = ScanContext(target=Target(repo=str(tmp_path)))
     findings = check_gitignore(ctx)
     assert all(f.severity is Severity.INFO for f in findings)
+
+
+def test_inline_allow_marker_suppresses():
+    from oscan.checks.secrets_git import _scan_text
+
+    flagged = 'api_key = "abcd1234efgh5678ijkl9012mnop"'
+    assert _scan_text(flagged), "control: a bare fake key should be detected"
+    assert not _scan_text(flagged + "  # gitleaks:allow"), "allow marker should suppress"

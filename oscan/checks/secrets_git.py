@@ -40,6 +40,10 @@ _PATTERNS = {
 _CRITICAL_RULES = ("private", "aws", "azure", "gcp", "google", "rsa", "pgp")
 _HISTORY_BYTE_CAP = 5_000_000  # don't read more than ~5 MB of git history
 
+# Inline markers that tell oscan (as gitleaks/detect-secrets do) to ignore a
+# known or deliberately-fake secret on that line - the allowlist convention.
+_ALLOW_MARKERS = ("gitleaks:allow", "pragma: allowlist secret", "oscan:allow")
+
 
 def _redact(secret: str) -> str:
     secret = secret.strip()
@@ -77,6 +81,7 @@ def _run_gitleaks(repo: Path) -> list[Finding]:
             capture_output=True,
             text=True,
             timeout=180,
+            cwd=str(repo),  # so gitleaks honors the repo's own .gitleaksignore
         )
         data = json.loads(Path(report_path).read_text(encoding="utf-8") or "[]")
     except Exception as exc:  # noqa: BLE001
@@ -134,11 +139,20 @@ def _run_gitleaks(repo: Path) -> list[Finding]:
 
 
 def _scan_text(text: str) -> list[tuple[str, str]]:
-    hits = []
-    for name, pat in _PATTERNS.items():
-        m = pat.search(text)
-        if m:
-            hits.append((name, _redact(m.group(0))))
+    hits: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for line in text.splitlines():
+        if any(marker in line for marker in _ALLOW_MARKERS):
+            continue  # allowlisted line (e.g. a known test fixture)
+        for name, pat in _PATTERNS.items():
+            if name in seen:
+                continue
+            m = pat.search(line)
+            if m:
+                hits.append((name, _redact(m.group(0))))
+                seen.add(name)
+        if len(seen) == len(_PATTERNS):
+            break
     return hits
 
 

@@ -1,0 +1,7 @@
+# Deliberately fake credentials in test fixtures - not real secrets.
+# These fingerprints are the historical commits of tests/test_secrets_git.py
+# where the fake "api_key" literal was added, before the inline
+# `# gitleaks:allow` marker existed. See SECURITY.md / CONTRIBUTING.md.
+db2d260da42e16d809e3e32b853bb37402737569:tests/test_secrets_git.py:generic-api-key:15
+8acf4318691af09ed141de2fedbbf1cac3bbdf22:tests/test_secrets_git.py:generic-api-key:16
+b8dca81cfc7bf971c3948d172987792e1e2b5f09:tests/test_secrets_git.py:generic-api-key:16

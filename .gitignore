@@ -13,3 +13,5 @@ report.md
 .oscan/
 .DS_Store
 .env
+*.key
+*.pem
