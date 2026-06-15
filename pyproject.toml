@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,9 +8,23 @@ version = "0.1.0"
 description = "oscan - a manual, authorized self-assessment scanner for web apps and sites (vulnerabilities + GDPR), with secure-by-default guidance."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "orelsv" }]
 keywords = ["security", "pentest", "gdpr", "scanner", "dast", "self-assessment"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
 
 dependencies = [
     "httpx>=0.27",
@@ -30,6 +44,9 @@ oscan = "oscan.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/orelsv/orel-cybersecurity-check"
+Repository = "https://github.com/orelsv/orel-cybersecurity-check"
+Issues = "https://github.com/orelsv/orel-cybersecurity-check/issues"
+Changelog = "https://github.com/orelsv/orel-cybersecurity-check/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["oscan*"]

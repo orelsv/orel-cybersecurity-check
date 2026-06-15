@@ -13,6 +13,8 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and format checks.
 - `ruff` configuration and a `dev` dependency for it.
 - `CONTRIBUTING.md`.
+- PyPI packaging metadata (trove classifiers, project URLs, SPDX license) and a
+  release workflow that publishes to PyPI via Trusted Publishing on a version tag.
 
 ### Changed
 - Normalized punctuation to plain ASCII across source and docs.
