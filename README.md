@@ -1,8 +1,8 @@
 # oscan - orel-cybersecurity-check
 
+[![CI](https://github.com/orelsv/orel-cybersecurity-check/actions/workflows/ci.yml/badge.svg)](https://github.com/orelsv/orel-cybersecurity-check/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-51%20passing-brightgreen.svg)](tests/)
 
 A manual, **authorized self-assessment** scanner for the sites, web apps, and
 repos people increasingly build with AI. It catches the holes those builds ship
@@ -123,11 +123,13 @@ For a project-local install instead of global, replace `~/.claude/skills` with
 
 ```bash
 pip install -e ".[dev]"
-pytest                      # 51 tests, no network required
+ruff check . && ruff format --check .   # lint + formatting (CI gate)
+pytest                                  # 51 tests, no network required
 ```
 
 The test suite includes an end-to-end run against a deliberately vulnerable
-local server and a git repo with a committed-then-deleted secret.
+local server and a git repo with a committed-then-deleted secret. CI runs the
+same checks on Python 3.11-3.13. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
