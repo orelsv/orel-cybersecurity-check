@@ -1,14 +1,32 @@
 # oscan - orel-cybersecurity-check
 
+> **Find the security holes AI-built apps ship with, in one command.**
+> Both a scanner *and* a [Claude Code](https://claude.com/claude-code) skill: audit any
+> site, web app, or repo for vulnerabilities, leaked secrets, and GDPR gaps, or build
+> new apps secure by default.
+
 [![CI](https://github.com/orelsv/orel-cybersecurity-check/actions/workflows/ci.yml/badge.svg)](https://github.com/orelsv/orel-cybersecurity-check/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 
-A manual, **authorized self-assessment** scanner for the sites, web apps, and
-repos people increasingly build with AI. It catches the holes those builds ship
-with - SQL injection, secrets in git history, weak cookies/tokens, an exposed
-`.git`/`.env`, missing security headers, no rate-limiting - and it checks
-**GDPR/privacy** basics too.
+```bash
+uvx --from orel-cybersecurity-check oscan https://your-site.example
+```
+
+![oscan running an active scan against OWASP Juice Shop](screenshots/demo-juiceshop-active.png)
+
+A manual, **authorized self-assessment** scanner for the sites, web apps, and repos
+people increasingly build with AI. It catches the holes those builds ship with: SQL
+injection, secrets in git history, weak cookies/tokens, an exposed `.git`/`.env`,
+missing security headers, no rate-limiting, and it checks **GDPR/privacy** basics too.
+
+### Highlights
+
+- **One command, whole surface** - TLS, security headers, cookies & tokens, secrets in **git history**, exposed `.git`/`.env`, injection, auth hardening, DoS-resilience, and GDPR.
+- **Scanner + Claude Code skill** - audit an existing app, or build a new one secure by default.
+- **Actionable output** - a 0-100 risk score, a letter grade, and plain-language fixes, plus JSON and Markdown reports.
+- **Safe by default** - passive is observe-only; intrusive checks are gated behind `--i-am-authorized`.
+- **Local or remote** - scan a live URL, a local repo, or a remote repo by its git URL.
 
 Detection is deterministic (in code); an optional Claude layer only rewrites
 findings into plain language. The tool works fully offline without it.
