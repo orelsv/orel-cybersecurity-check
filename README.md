@@ -37,6 +37,24 @@ for self-assessment, authorized pentesting, and learning.
 
 ## Install
 
+Run it once, with no permanent install (needs [uv](https://docs.astral.sh/uv/)):
+
+```bash
+uvx --from orel-cybersecurity-check oscan https://your-site.example
+```
+
+Install the `oscan` command for repeated use:
+
+```bash
+pipx install orel-cybersecurity-check     # isolated (recommended)
+pip install orel-cybersecurity-check      # or plain pip
+```
+
+For the optional Claude enrichment layer, add the `ai` extra:
+`pipx install "orel-cybersecurity-check[ai]"`.
+
+From source, for development:
+
 ```bash
 git clone https://github.com/orelsv/orel-cybersecurity-check.git
 cd orel-cybersecurity-check
