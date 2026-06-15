@@ -63,14 +63,32 @@ def _run_gitleaks(repo: Path) -> list[Finding]:
         report_path = tf.name
     try:
         subprocess.run(
-            ["gitleaks", mode, str(repo), "--report-format", "json",
-             "--report-path", report_path, "--no-banner", "--redact"],
-            capture_output=True, text=True, timeout=180,
+            [
+                "gitleaks",
+                mode,
+                str(repo),
+                "--report-format",
+                "json",
+                "--report-path",
+                report_path,
+                "--no-banner",
+                "--redact",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
         )
         data = json.loads(Path(report_path).read_text(encoding="utf-8") or "[]")
     except Exception as exc:  # noqa: BLE001
-        return [Finding(id="SECRET-ERR", title="gitleaks run failed", severity=Severity.INFO,
-                        category=CATEGORY, evidence=str(exc))]
+        return [
+            Finding(
+                id="SECRET-ERR",
+                title="gitleaks run failed",
+                severity=Severity.INFO,
+                category=CATEGORY,
+                evidence=str(exc),
+            )
+        ]
     finally:
         try:
             os.unlink(report_path)
@@ -89,19 +107,29 @@ def _run_gitleaks(repo: Path) -> list[Finding]:
         seen.add(key)
         in_history = bool(commit)
         where = f"{file}" + (f" @ commit {commit}" if commit else "")
-        findings.append(Finding(
-            id="SECRET-001", title=f"Secret detected: {item.get('Description', rule)}",
-            severity=_severity_for(rule), category=CATEGORY, location=where,
-            evidence=item.get("Match", "")[:80] or _redact(item.get("Secret", "")),
-            why=("This secret is in git history; even if deleted from the latest commit it "
-                 "is still recoverable by anyone with the repo." if in_history
-                 else "A live secret in the repo can be used directly by anyone who reads the code."),
-            fix="Rotate/revoke the secret now (history rewrite alone is not enough), then store it "
+        findings.append(
+            Finding(
+                id="SECRET-001",
+                title=f"Secret detected: {item.get('Description', rule)}",
+                severity=_severity_for(rule),
+                category=CATEGORY,
+                location=where,
+                evidence=item.get("Match", "")[:80] or _redact(item.get("Secret", "")),
+                why=(
+                    "This secret is in git history; even if deleted from the latest commit it "
+                    "is still recoverable by anyone with the repo."
+                    if in_history
+                    else "A live secret in the repo can be used directly by anyone who reads the code."
+                ),
+                fix="Rotate/revoke the secret now (history rewrite alone is not enough), then store it "
                 "in environment variables or a secrets manager (e.g. Azure Key Vault) and add it to .gitignore.",
-            references=["https://docs.github.com/code-security/secret-scanning"],
-        ))
+                references=["https://docs.github.com/code-security/secret-scanning"],
+            )
+        )
     if not findings:
-        findings.append(passed("SECRET-001", "No secrets detected by gitleaks", CATEGORY, location=str(repo)))
+        findings.append(
+            passed("SECRET-001", "No secrets detected by gitleaks", CATEGORY, location=str(repo))
+        )
     return findings
 
 
@@ -128,37 +156,56 @@ def _run_builtin(repo: Path) -> list[Finding]:
         except OSError:
             continue
         for name, redacted in _scan_text(text):
-            findings.append(Finding(
-                id="SECRET-002", title=f"Possible secret in working tree: {name}",
-                severity=_severity_for(name), category=CATEGORY,
-                location=str(path.relative_to(repo)), evidence=redacted,
-                why="A secret committed to the repo can be used by anyone who reads the code.",
-                fix="Remove it, rotate the secret, move it to env/secrets manager, and add the file to .gitignore.",
-            ))
+            findings.append(
+                Finding(
+                    id="SECRET-002",
+                    title=f"Possible secret in working tree: {name}",
+                    severity=_severity_for(name),
+                    category=CATEGORY,
+                    location=str(path.relative_to(repo)),
+                    evidence=redacted,
+                    why="A secret committed to the repo can be used by anyone who reads the code.",
+                    fix="Remove it, rotate the secret, move it to env/secrets manager, and add the file to .gitignore.",
+                )
+            )
 
     # History (capped) - find secrets that may have been deleted but persist in commits.
     if _is_git_repo(repo):
         try:
             proc = subprocess.Popen(
                 ["git", "-C", str(repo), "log", "-p", "--all", "--no-color"],
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
             )
             buf = proc.stdout.read(_HISTORY_BYTE_CAP) if proc.stdout else ""
             proc.kill()
-            history_hits = {name: red for name, red in _scan_text(buf)}
+            history_hits = dict(_scan_text(buf))
             for name, redacted in history_hits.items():
-                findings.append(Finding(
-                    id="SECRET-003", title=f"Possible secret in git history: {name}",
-                    severity=_severity_for(name), category=CATEGORY, location=f"{repo} (git history)",
-                    evidence=redacted,
-                    why="Secrets in history are recoverable from any clone even after deletion from the latest commit.",
-                    fix="Rotate the secret immediately, then scrub history (git filter-repo) and force-push.",
-                ))
+                findings.append(
+                    Finding(
+                        id="SECRET-003",
+                        title=f"Possible secret in git history: {name}",
+                        severity=_severity_for(name),
+                        category=CATEGORY,
+                        location=f"{repo} (git history)",
+                        evidence=redacted,
+                        why="Secrets in history are recoverable from any clone even after deletion from the latest commit.",
+                        fix="Rotate the secret immediately, then scrub history (git filter-repo) and force-push.",
+                    )
+                )
         except Exception:  # noqa: BLE001
             pass
 
     if not findings:
-        findings.append(passed("SECRET-002", "No high-confidence secrets found (built-in scan)", CATEGORY, location=str(repo)))
+        findings.append(
+            passed(
+                "SECRET-002",
+                "No high-confidence secrets found (built-in scan)",
+                CATEGORY,
+                location=str(repo),
+            )
+        )
     return findings
 
 
@@ -166,8 +213,15 @@ def _run_builtin(repo: Path) -> list[Finding]:
 def check_secrets(ctx: ScanContext) -> list[Finding]:
     repo = Path(ctx.target.repo)
     if not repo.exists():
-        return [Finding(id="SECRET-000", title="Repo path not found", severity=Severity.INFO,
-                        category=CATEGORY, evidence=str(repo))]
+        return [
+            Finding(
+                id="SECRET-000",
+                title="Repo path not found",
+                severity=Severity.INFO,
+                category=CATEGORY,
+                evidence=str(repo),
+            )
+        ]
     if shutil.which("gitleaks"):
         return _run_gitleaks(repo)
     return _run_builtin(repo)
@@ -179,20 +233,34 @@ def check_gitignore(ctx: ScanContext) -> list[Finding]:
     gi = repo / ".gitignore"
     expected = [".env", "*.key", "*.pem"]
     if not gi.exists():
-        return [Finding(
-            id="GIT-IGNORE-001", title="No .gitignore file",
-            severity=Severity.LOW, category=CATEGORY, location=str(repo),
-            why="Without .gitignore it is easy to accidentally commit .env files, keys, and credentials.",
-            fix="Add a .gitignore covering .env, *.key, *.pem, and other secret/build artifacts.",
-        )]
+        return [
+            Finding(
+                id="GIT-IGNORE-001",
+                title="No .gitignore file",
+                severity=Severity.LOW,
+                category=CATEGORY,
+                location=str(repo),
+                why="Without .gitignore it is easy to accidentally commit .env files, keys, and credentials.",
+                fix="Add a .gitignore covering .env, *.key, *.pem, and other secret/build artifacts.",
+            )
+        ]
     content = gi.read_text(encoding="utf-8", errors="ignore")
     missing = [pat for pat in expected if pat not in content]
     if missing:
-        return [Finding(
-            id="GIT-IGNORE-002", title=".gitignore missing common secret patterns",
-            severity=Severity.LOW, category=CATEGORY, location=str(gi),
-            evidence=f"Not ignored: {', '.join(missing)}",
-            why="Files matching these patterns can be committed by accident and leak credentials.",
-            fix=f"Add these lines to .gitignore: {', '.join(missing)}",
-        )]
-    return [passed("GIT-IGNORE-001", ".gitignore covers common secret patterns", CATEGORY, location=str(gi))]
+        return [
+            Finding(
+                id="GIT-IGNORE-002",
+                title=".gitignore missing common secret patterns",
+                severity=Severity.LOW,
+                category=CATEGORY,
+                location=str(gi),
+                evidence=f"Not ignored: {', '.join(missing)}",
+                why="Files matching these patterns can be committed by accident and leak credentials.",
+                fix=f"Add these lines to .gitignore: {', '.join(missing)}",
+            )
+        ]
+    return [
+        passed(
+            "GIT-IGNORE-001", ".gitignore covers common secret patterns", CATEGORY, location=str(gi)
+        )
+    ]

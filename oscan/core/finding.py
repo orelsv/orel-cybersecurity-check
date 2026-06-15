@@ -41,16 +41,16 @@ class Severity(enum.Enum):
 class Finding:
     """A single issue (or, when severity is INFO, an observation / passed check)."""
 
-    id: str                       # stable check id, e.g. "HDR-001"
-    title: str                    # short human title
+    id: str  # stable check id, e.g. "HDR-001"
+    title: str  # short human title
     severity: Severity
-    category: str                 # e.g. "Transport & headers", "GDPR"
-    why: str = ""                 # one-sentence real attack/impact scenario
-    fix: str = ""                 # concrete remediation
-    evidence: str = ""            # what was observed (redacted, no secrets)
-    location: str = ""            # url / header / file:line
+    category: str  # e.g. "Transport & headers", "GDPR"
+    why: str = ""  # one-sentence real attack/impact scenario
+    fix: str = ""  # concrete remediation
+    evidence: str = ""  # what was observed (redacted, no secrets)
+    location: str = ""  # url / header / file:line
     references: list[str] = field(default_factory=list)
-    enrichment: str = ""          # optional plain-language note from the LLM layer
+    enrichment: str = ""  # optional plain-language note from the LLM layer
 
     def to_dict(self) -> dict:
         d = {

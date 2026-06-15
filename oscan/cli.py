@@ -1,18 +1,16 @@
 """oscan command-line interface.
 
-    oscan https://mysite.example                 # passive (safe, default)
-    oscan https://mysite.example --profile active --i-am-authorized
-    oscan --repo ./my-project                    # local git/secret scan
-    oscan https://mysite.example --json out.json --md out.md
+oscan https://mysite.example                 # passive (safe, default)
+oscan https://mysite.example --profile active --i-am-authorized
+oscan --repo ./my-project                    # local git/secret scan
+oscan https://mysite.example --json out.json --md out.md
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 from pathlib import Path
-from urllib.parse import urlparse
 
 from rich.console import Console
 
@@ -48,6 +46,7 @@ def _load_scope(path: str | None) -> list[str] | None:
     if not path:
         return None
     import yaml
+
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     if isinstance(data, dict):
         return [str(x) for x in data.get("scope", [])]
@@ -79,23 +78,52 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("target", nargs="?", help="URL (https://...) or a local repo path to scan")
     p.add_argument("--repo", help="local repository path to scan for secrets/git leaks")
-    p.add_argument("--profile", choices=["passive", "standard", "active"], default="passive",
-                   help="passive (default, observe only) | standard | active (intrusive, gated)")
+    p.add_argument(
+        "--profile",
+        choices=["passive", "standard", "active"],
+        default="passive",
+        help="passive (default, observe only) | standard | active (intrusive, gated)",
+    )
     p.add_argument("--scope", help="YAML allowlist of hosts permitted for active scanning")
-    p.add_argument("--i-am-authorized", action="store_true", dest="authorized",
-                   help="assert you own or are authorized to test the target (required for active)")
-    p.add_argument("--yes", action="store_true", help="skip the interactive active-scan confirmation")
+    p.add_argument(
+        "--i-am-authorized",
+        action="store_true",
+        dest="authorized",
+        help="assert you own or are authorized to test the target (required for active)",
+    )
+    p.add_argument(
+        "--yes", action="store_true", help="skip the interactive active-scan confirmation"
+    )
     p.add_argument("--json", dest="json_path", help="write JSON report to this path")
     p.add_argument("--md", dest="md_path", help="write Markdown report to this path")
-    p.add_argument("--no-enrich", action="store_true", help="disable optional Claude plain-language enrichment")
-    p.add_argument("--insecure", action="store_true", help="do not verify TLS certificates (testing only)")
-    p.add_argument("--min-interval", type=float, default=0.3, help="seconds between requests (throttle)")
-    p.add_argument("--dos-burst", type=int, default=30, help="request count for the DoS-resilience check (hard-capped at 50)")
+    p.add_argument(
+        "--no-enrich", action="store_true", help="disable optional Claude plain-language enrichment"
+    )
+    p.add_argument(
+        "--insecure", action="store_true", help="do not verify TLS certificates (testing only)"
+    )
+    p.add_argument(
+        "--min-interval", type=float, default=0.3, help="seconds between requests (throttle)"
+    )
+    p.add_argument(
+        "--dos-burst",
+        type=int,
+        default=30,
+        help="request count for the DoS-resilience check (hard-capped at 50)",
+    )
     # Login lockout check (active) - supply your OWN test account.
     p.add_argument("--login-url", help="login form POST URL (enables the lockout check)")
     p.add_argument("--login-user", help="username/email of YOUR test account for the lockout check")
-    p.add_argument("--login-userfield", default="username", help="form field name for the username (default: username)")
-    p.add_argument("--login-passfield", default="password", help="form field name for the password (default: password)")
+    p.add_argument(
+        "--login-userfield",
+        default="username",
+        help="form field name for the username (default: username)",
+    )
+    p.add_argument(
+        "--login-passfield",
+        default="password",
+        help="form field name for the password (default: password)",
+    )
     p.add_argument("--version", action="version", version=f"oscan {__version__}")
     return p
 
@@ -160,6 +188,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.no_enrich:
         try:
             from .report import enrich
+
             enrich.enrich_findings(findings)
         except Exception:
             pass
@@ -170,7 +199,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json_path:
         meta = {"requests_sent": http.request_count if http else 0}
-        json_report.write(args.json_path, json_report.build(label, args.profile, summary, findings, meta))
+        json_report.write(
+            args.json_path, json_report.build(label, args.profile, summary, findings, meta)
+        )
         console.print(f"[dim]JSON report → {args.json_path}[/dim]")
     if args.md_path:
         markdown.write(args.md_path, markdown.build(label, args.profile, summary, findings))

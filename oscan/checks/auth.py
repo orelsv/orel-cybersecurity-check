@@ -23,9 +23,21 @@ from ..core.registry import check
 CATEGORY = "Auth hardening"
 _JWT_RE = re.compile(r"eyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]*")
 _SENSITIVE_CLAIMS = {"password", "passwd", "secret", "ssn", "credit_card", "cvv"}
-_LOCKOUT_HINTS = re.compile(r"(too many|locked|temporarily disabled|try again later|captcha|rate.?limit)", re.I)
-_ADMIN_PATHS = ["admin", "admin/", "api/admin", "api/debug", "debug", "actuator", "actuator/env",
-                "api/users", "wp-admin/", "phpmyadmin/"]
+_LOCKOUT_HINTS = re.compile(
+    r"(too many|locked|temporarily disabled|try again later|captcha|rate.?limit)", re.I
+)
+_ADMIN_PATHS = [
+    "admin",
+    "admin/",
+    "api/admin",
+    "api/debug",
+    "debug",
+    "actuator",
+    "actuator/env",
+    "api/users",
+    "wp-admin/",
+    "phpmyadmin/",
+]
 _MAX_LOGIN_ATTEMPTS = 8
 
 
@@ -50,50 +62,75 @@ def check_jwt(ctx: ScanContext) -> list[Finding]:
         except Exception:
             continue
         if str(header.get("alg", "")).lower() == "none":
-            findings.append(Finding(
-                id="JWT-001", title="JWT uses alg=none (unsigned)",
-                severity=Severity.CRITICAL, category=CATEGORY, location=ctx.target.url,
-                why="An unsigned JWT can be forged by anyone, allowing trivial account/role takeover.",
-                fix="Reject alg=none; require a strong signing algorithm (e.g. RS256/EdDSA) and verify it.",
-            ))
+            findings.append(
+                Finding(
+                    id="JWT-001",
+                    title="JWT uses alg=none (unsigned)",
+                    severity=Severity.CRITICAL,
+                    category=CATEGORY,
+                    location=ctx.target.url,
+                    why="An unsigned JWT can be forged by anyone, allowing trivial account/role takeover.",
+                    fix="Reject alg=none; require a strong signing algorithm (e.g. RS256/EdDSA) and verify it.",
+                )
+            )
         if "exp" not in payload:
-            findings.append(Finding(
-                id="JWT-002", title="JWT has no expiry (exp) claim",
-                severity=Severity.MEDIUM, category=CATEGORY, location=ctx.target.url,
-                why="A token that never expires stays valid forever if stolen.",
-                fix="Add a short 'exp' claim and refresh tokens server-side.",
-            ))
+            findings.append(
+                Finding(
+                    id="JWT-002",
+                    title="JWT has no expiry (exp) claim",
+                    severity=Severity.MEDIUM,
+                    category=CATEGORY,
+                    location=ctx.target.url,
+                    why="A token that never expires stays valid forever if stolen.",
+                    fix="Add a short 'exp' claim and refresh tokens server-side.",
+                )
+            )
         leaked = _SENSITIVE_CLAIMS & {str(k).lower() for k in payload}
         if leaked:
-            findings.append(Finding(
-                id="JWT-003", title="JWT carries sensitive claims",
-                severity=Severity.HIGH, category=CATEGORY, location=ctx.target.url,
-                evidence=f"Claims: {', '.join(sorted(leaked))}",
-                why="JWT payloads are only base64 (not encrypted); anyone can read these values.",
-                fix="Never put secrets/PII in a JWT payload; keep only an opaque user id.",
-            ))
+            findings.append(
+                Finding(
+                    id="JWT-003",
+                    title="JWT carries sensitive claims",
+                    severity=Severity.HIGH,
+                    category=CATEGORY,
+                    location=ctx.target.url,
+                    evidence=f"Claims: {', '.join(sorted(leaked))}",
+                    why="JWT payloads are only base64 (not encrypted); anyone can read these values.",
+                    fix="Never put secrets/PII in a JWT payload; keep only an opaque user id.",
+                )
+            )
 
         alg = str(header.get("alg", "")).upper()
         parts = token.split(".")
         sig = parts[2] if len(parts) > 2 else ""
         if alg.startswith("HS"):
-            findings.append(Finding(
-                id="JWT-004", title=f"JWT signed with symmetric HMAC ({alg})",
-                severity=Severity.MEDIUM, category=CATEGORY, location=ctx.target.url,
-                why="HMAC keys are shared secrets: a leaked/weak secret forges any token, and servers "
+            findings.append(
+                Finding(
+                    id="JWT-004",
+                    title=f"JWT signed with symmetric HMAC ({alg})",
+                    severity=Severity.MEDIUM,
+                    category=CATEGORY,
+                    location=ctx.target.url,
+                    why="HMAC keys are shared secrets: a leaked/weak secret forges any token, and servers "
                     "that accept multiple algorithms are open to RS256→HS256 confusion (the public key is "
                     "used as the HMAC secret).",
-                fix="Prefer asymmetric signing (RS256/EdDSA); pin one expected algorithm and reject all others; "
+                    fix="Prefer asymmetric signing (RS256/EdDSA); pin one expected algorithm and reject all others; "
                     "use a long, random HMAC secret if HMAC is required.",
-                references=["https://portswigger.net/web-security/jwt/algorithm-confusion"],
-            ))
+                    references=["https://portswigger.net/web-security/jwt/algorithm-confusion"],
+                )
+            )
         if not sig and alg != "NONE":
-            findings.append(Finding(
-                id="JWT-005", title="JWT has an empty signature",
-                severity=Severity.HIGH, category=CATEGORY, location=ctx.target.url,
-                why="A token whose signature segment is empty is effectively unsigned and can be tampered with.",
-                fix="Ensure tokens are signed and the server verifies the signature before trusting claims.",
-            ))
+            findings.append(
+                Finding(
+                    id="JWT-005",
+                    title="JWT has an empty signature",
+                    severity=Severity.HIGH,
+                    category=CATEGORY,
+                    location=ctx.target.url,
+                    why="A token whose signature segment is empty is effectively unsigned and can be tampered with.",
+                    fix="Ensure tokens are signed and the server verifies the signature before trusting claims.",
+                )
+            )
     return findings
 
 
@@ -114,18 +151,31 @@ def check_admin_endpoints(ctx: ScanContext) -> list[Finding]:
         body = (resp.text or "")[:5000]
         low = body.lower()
         has_login = "password" in low and "<input" in low
-        looks_admin = any(k in low for k in ("dashboard", "admin panel", "users", "actuator")) or low.strip().startswith("{")
+        looks_admin = any(
+            k in low for k in ("dashboard", "admin panel", "users", "actuator")
+        ) or low.strip().startswith("{")
         if looks_admin and not has_login:
-            findings.append(Finding(
-                id="AUTH-001", title=f"Admin/debug endpoint reachable without auth: /{path}",
-                severity=Severity.HIGH, category=CATEGORY, location=url,
-                evidence=f"HTTP 200, no login required ({len(body)} bytes)",
-                why="An unauthenticated admin/debug endpoint can leak data or allow privileged actions.",
-                fix="Require authentication and authorization on all admin/debug/management routes; disable debug in prod.",
-            ))
+            findings.append(
+                Finding(
+                    id="AUTH-001",
+                    title=f"Admin/debug endpoint reachable without auth: /{path}",
+                    severity=Severity.HIGH,
+                    category=CATEGORY,
+                    location=url,
+                    evidence=f"HTTP 200, no login required ({len(body)} bytes)",
+                    why="An unauthenticated admin/debug endpoint can leak data or allow privileged actions.",
+                    fix="Require authentication and authorization on all admin/debug/management routes; disable debug in prod.",
+                )
+            )
     if not findings:
-        findings.append(passed("AUTH-001", "No unauthenticated admin/debug endpoints found", CATEGORY,
-                               location=ctx.target.url))
+        findings.append(
+            passed(
+                "AUTH-001",
+                "No unauthenticated admin/debug endpoints found",
+                CATEGORY,
+                location=ctx.target.url,
+            )
+        )
     return findings
 
 
@@ -141,13 +191,18 @@ def check_login_lockout(ctx: ScanContext) -> list[Finding]:
     login_url = ctx.option("login_url")
     user = ctx.option("login_user")
     if not login_url or not user:
-        return [Finding(
-            id="AUTH-LOCK-000", title="Login lockout test skipped (no credentials supplied)",
-            severity=Severity.INFO, category=CATEGORY, location=ctx.target.url,
-            evidence="Provide --login-url and --login-user (your own test account) to run this check.",
-            fix="Re-run with --login-url/--login-user to verify lockout exists. oscan never cracks passwords; "
+        return [
+            Finding(
+                id="AUTH-LOCK-000",
+                title="Login lockout test skipped (no credentials supplied)",
+                severity=Severity.INFO,
+                category=CATEGORY,
+                location=ctx.target.url,
+                evidence="Provide --login-url and --login-user (your own test account) to run this check.",
+                fix="Re-run with --login-url/--login-user to verify lockout exists. oscan never cracks passwords; "
                 "it sends a few failed logins to confirm the defense triggers.",
-        )]
+            )
+        ]
 
     userfield = ctx.option("login_userfield", "username")
     passfield = ctx.option("login_passfield", "password")
@@ -156,7 +211,7 @@ def check_login_lockout(ctx: ScanContext) -> list[Finding]:
     defended = False
     statuses = []
     for i in range(attempts):
-        data = {userfield: user, passfield: f"wrong-oscan-{i}-{'x'*6}"}
+        data = {userfield: user, passfield: f"wrong-oscan-{i}-{'x' * 6}"}
         try:
             resp = ctx.http.post(login_url, data=data, follow_redirects=False)
         except Exception:
@@ -167,14 +222,26 @@ def check_login_lockout(ctx: ScanContext) -> list[Finding]:
             break
 
     if defended:
-        return [passed("AUTH-LOCK-001", "Login rate-limiting / lockout triggered", CATEGORY,
-                       location=login_url, evidence=f"Defense engaged after {len(statuses)} attempts")]
-    return [Finding(
-        id="AUTH-LOCK-001", title="No login rate-limiting / lockout observed",
-        severity=Severity.MEDIUM, category=CATEGORY, location=login_url,
-        evidence=f"{len(statuses)} failed logins, no 429/lockout (statuses: {statuses})",
-        why="Without lockout or rate-limiting, attackers can brute-force or credential-stuff the login at will.",
-        fix="Add rate-limiting, exponential backoff, account lockout, and/or CAPTCHA after a few failures; "
+        return [
+            passed(
+                "AUTH-LOCK-001",
+                "Login rate-limiting / lockout triggered",
+                CATEGORY,
+                location=login_url,
+                evidence=f"Defense engaged after {len(statuses)} attempts",
+            )
+        ]
+    return [
+        Finding(
+            id="AUTH-LOCK-001",
+            title="No login rate-limiting / lockout observed",
+            severity=Severity.MEDIUM,
+            category=CATEGORY,
+            location=login_url,
+            evidence=f"{len(statuses)} failed logins, no 429/lockout (statuses: {statuses})",
+            why="Without lockout or rate-limiting, attackers can brute-force or credential-stuff the login at will.",
+            fix="Add rate-limiting, exponential backoff, account lockout, and/or CAPTCHA after a few failures; "
             "consider MFA.",
-        references=["https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks"],
-    )]
+            references=["https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks"],
+        )
+    ]

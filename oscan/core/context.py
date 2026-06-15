@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
 class Target:
     """What we are scanning: a live URL, a local repo path, or both."""
 
-    url: Optional[str] = None
-    repo: Optional[str] = None
+    url: str | None = None
+    repo: str | None = None
 
     @property
     def label(self) -> str:
@@ -24,7 +24,7 @@ class ScanContext:
     cached HTTP client; they never mutate global state."""
 
     target: Target
-    http: Any = None                       # oscan.core.http.HttpClient (lazy import)
+    http: Any = None  # oscan.core.http.HttpClient (lazy import)
     profile: str = "passive"
     intrusive_allowed: bool = False
     options: dict = field(default_factory=dict)

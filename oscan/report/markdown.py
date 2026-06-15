@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import time
-from typing import List
 
 from ..core.finding import Finding, Severity
 from ..core.scoring import ScanSummary
 
 _EMOJI = {
-    Severity.CRITICAL: "🔴", Severity.HIGH: "🟠", Severity.MEDIUM: "🟡",
-    Severity.LOW: "🔵", Severity.INFO: "✅",
+    Severity.CRITICAL: "🔴",
+    Severity.HIGH: "🟠",
+    Severity.MEDIUM: "🟡",
+    Severity.LOW: "🔵",
+    Severity.INFO: "✅",
 }
 
 
-def build(target: str, profile: str, summary: ScanSummary, findings: List[Finding]) -> str:
+def build(target: str, profile: str, summary: ScanSummary, findings: list[Finding]) -> str:
     lines: list[str] = []
     lines.append(f"# oscan report - {target}")
     lines.append("")
@@ -50,7 +52,9 @@ def build(target: str, profile: str, summary: ScanSummary, findings: List[Findin
     else:
         lines.append("## Findings")
         lines.append("")
-        lines.append("No issues found at this profile. Consider running a higher profile or adding defense-in-depth.")
+        lines.append(
+            "No issues found at this profile. Consider running a higher profile or adding defense-in-depth."
+        )
         lines.append("")
 
     passed = [f for f in findings if f.severity is Severity.INFO]

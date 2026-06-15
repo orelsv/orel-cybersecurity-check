@@ -28,29 +28,51 @@ def check_cors(ctx: ScanContext) -> list[Finding]:
     url = str(resp.url)
 
     if not acao:
-        return [passed("CORS-001", "No permissive CORS headers on the home page", CATEGORY, location=url)]
+        return [
+            passed(
+                "CORS-001", "No permissive CORS headers on the home page", CATEGORY, location=url
+            )
+        ]
 
     # Reflecting an arbitrary origin (or null) with credentials is the dangerous case.
     if acao == _EVIL_ORIGIN or acao == "null":
         sev = Severity.HIGH if acac == "true" else Severity.MEDIUM
-        return [Finding(
-            id="CORS-001", title="CORS reflects an arbitrary Origin",
-            severity=sev, category=CATEGORY, location=url,
-            evidence=f"Access-Control-Allow-Origin: {acao}" + (" + Allow-Credentials: true" if acac == "true" else ""),
-            why="Any website can read this site's responses on behalf of a logged-in user - "
+        return [
+            Finding(
+                id="CORS-001",
+                title="CORS reflects an arbitrary Origin",
+                severity=sev,
+                category=CATEGORY,
+                location=url,
+                evidence=f"Access-Control-Allow-Origin: {acao}"
+                + (" + Allow-Credentials: true" if acac == "true" else ""),
+                why="Any website can read this site's responses on behalf of a logged-in user - "
                 "with credentials enabled, that means stealing private data.",
-            fix="Allowlist trusted origins explicitly; never reflect the request Origin; "
+                fix="Allowlist trusted origins explicitly; never reflect the request Origin; "
                 "don't combine a wildcard/reflected origin with Allow-Credentials: true.",
-            references=["https://developer.mozilla.org/docs/Web/HTTP/CORS"],
-        )]
+                references=["https://developer.mozilla.org/docs/Web/HTTP/CORS"],
+            )
+        ]
 
     if acao == "*" and acac == "true":
-        return [Finding(
-            id="CORS-002", title="CORS wildcard with credentials",
-            severity=Severity.HIGH, category=CATEGORY, location=url,
-            evidence="Access-Control-Allow-Origin: * with Allow-Credentials: true",
-            why="A wildcard origin combined with credentials exposes authenticated responses to any site.",
-            fix="Use an explicit origin allowlist when credentials are allowed; never pair '*' with credentials.",
-        )]
+        return [
+            Finding(
+                id="CORS-002",
+                title="CORS wildcard with credentials",
+                severity=Severity.HIGH,
+                category=CATEGORY,
+                location=url,
+                evidence="Access-Control-Allow-Origin: * with Allow-Credentials: true",
+                why="A wildcard origin combined with credentials exposes authenticated responses to any site.",
+                fix="Use an explicit origin allowlist when credentials are allowed; never pair '*' with credentials.",
+            )
+        ]
 
-    return [passed("CORS-001", f"CORS present but not reflecting foreign origins ({acao})", CATEGORY, location=url)]
+    return [
+        passed(
+            "CORS-001",
+            f"CORS present but not reflecting foreign origins ({acao})",
+            CATEGORY,
+            location=url,
+        )
+    ]

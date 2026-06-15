@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-from typing import List
 
 from .finding import Finding, Severity
 
@@ -22,10 +21,10 @@ _TTC_BY_WORST = {
 
 @dataclass
 class ScanSummary:
-    risk_score: int                 # 0 (clean) .. 100 (worst)
-    grade: str                      # A .. F
+    risk_score: int  # 0 (clean) .. 100 (worst)
+    grade: str  # A .. F
     time_to_compromise: str
-    counts: dict                    # severity name -> count (excluding Info)
+    counts: dict  # severity name -> count (excluding Info)
     total_findings: int
 
 
@@ -41,7 +40,7 @@ def _grade(score: int) -> str:
     return "F"
 
 
-def summarize(findings: List[Finding]) -> ScanSummary:
+def summarize(findings: list[Finding]) -> ScanSummary:
     real = [f for f in findings if f.severity is not Severity.INFO]
     score = min(100, sum(f.severity.weight for f in real))
     counts = Counter(f.severity.value for f in real)

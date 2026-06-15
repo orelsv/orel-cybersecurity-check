@@ -5,22 +5,23 @@ import subprocess
 
 import pytest
 
-from oscan.checks.secrets_git import check_secrets, check_gitignore
+from oscan.checks.secrets_git import check_gitignore, check_secrets
 from oscan.core.context import ScanContext, Target
 from oscan.core.finding import Severity
 
 # A secret in the form gitleaks reliably flags (generic-api-key) and that the
 # built-in fallback also matches (Generic assignment pattern).
 _SECRET_CONTENT = (
-    'DB_PASSWORD = "Sup3rSecretP@ssw0rd123"\n'
-    'api_key = "abcd1234efgh5678ijkl9012mnop"\n'
+    'DB_PASSWORD = "Sup3rSecretP@ssw0rd123"\napi_key = "abcd1234efgh5678ijkl9012mnop"\n'
 )
 
 
 def _git(repo, *args):
     subprocess.run(
         ["git", "-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t", *args],
-        check=True, capture_output=True, text=True,
+        check=True,
+        capture_output=True,
+        text=True,
     )
 
 

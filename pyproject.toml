@@ -23,7 +23,7 @@ dependencies = [
 # Optional Claude-powered plain-language enrichment of findings.
 ai = ["anthropic>=0.40"]
 # Dev / test tooling.
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.6"]
 
 [project.scripts]
 oscan = "oscan.cli:main"
@@ -39,3 +39,13 @@ oscan = ["data/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "C4"]
+# Long detection payloads / URLs in checks make a hard line cap noisy; the
+# formatter still wraps real code.
+ignore = ["E501"]

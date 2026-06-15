@@ -1,8 +1,8 @@
 import sys
 import types
 
-from oscan.report import enrich
 from oscan.core.finding import Finding, Severity
+from oscan.report import enrich
 
 
 def test_parse_plain_array():

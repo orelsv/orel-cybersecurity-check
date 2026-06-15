@@ -4,7 +4,6 @@ import json
 from conftest import make_ctx
 
 from oscan.checks.auth import check_jwt
-from oscan.core.finding import Severity
 
 
 def _b64(d: dict) -> str:
@@ -24,8 +23,8 @@ def test_hmac_alg_flagged():
     tok = _token({"alg": "HS256", "typ": "JWT"}, {"sub": "1", "exp": 9999999999})
     ctx = make_ctx("https://x.example", [("set-cookie", f"t={tok}; Secure; HttpOnly")])
     got = ids(check_jwt(ctx))
-    assert "JWT-004" in got       # symmetric HMAC -> alg-confusion risk
-    assert "JWT-001" not in got   # not alg=none
+    assert "JWT-004" in got  # symmetric HMAC -> alg-confusion risk
+    assert "JWT-001" not in got  # not alg=none
 
 
 def test_empty_signature_flagged():
@@ -39,7 +38,7 @@ def test_alg_none_still_flagged():
     ctx = make_ctx("https://x.example", [("set-cookie", f"t={tok}; Secure; HttpOnly")])
     got = ids(check_jwt(ctx))
     assert "JWT-001" in got
-    assert "JWT-005" not in got   # alg=none is reported as JWT-001, not empty-sig
+    assert "JWT-005" not in got  # alg=none is reported as JWT-001, not empty-sig
 
 
 def test_rs256_no_hmac_finding():

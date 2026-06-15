@@ -8,19 +8,19 @@ import re
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 
-from oscan.checks.headers import check_security_headers
-from oscan.checks.cookies import check_cookies
-from oscan.checks.injection import check_injection
-from oscan.checks.auth import check_admin_endpoints
-from oscan.checks.cors import check_cors
 from oscan.checks.api import check_api_docs, check_excessive_data, check_verbose_errors
+from oscan.checks.auth import check_admin_endpoints
+from oscan.checks.cookies import check_cookies
+from oscan.checks.cors import check_cors
+from oscan.checks.headers import check_security_headers
+from oscan.checks.injection import check_injection
 from oscan.core.context import ScanContext, Target
-from oscan.core.http import HttpClient
 from oscan.core.finding import Severity
+from oscan.core.http import HttpClient
 
 
 class _VulnHandler(BaseHTTPRequestHandler):
@@ -35,7 +35,7 @@ class _VulnHandler(BaseHTTPRequestHandler):
         if origin:
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Access-Control-Allow-Credentials", "true")
-        for k, v in (extra or []):
+        for k, v in extra or []:
             self.send_header(k, v)
         self.end_headers()
         self.wfile.write(body if isinstance(body, bytes) else body.encode())
@@ -44,20 +44,25 @@ class _VulnHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         qs = parse_qs(parsed.query)
-        q = (qs.get("q", [""])[0])
+        q = qs.get("q", [""])[0]
 
         if path == "/":
-            body = ('<html><body><h1>Shop</h1>'
-                    '<a href="/search?q=test">search</a>'
-                    '<a href="/blind?id=1">item</a>'
-                    '<a href="/nosql?q=x">find</a>'
-                    '<a href="/fetch?url=x">load</a></body></html>')
+            body = (
+                "<html><body><h1>Shop</h1>"
+                '<a href="/search?q=test">search</a>'
+                '<a href="/blind?id=1">item</a>'
+                '<a href="/nosql?q=x">find</a>'
+                '<a href="/fetch?url=x">load</a></body></html>'
+            )
             self._send(200, "text/html", body, extra=[("Set-Cookie", "sid=abc123; Path=/")])
         elif path == "/swagger.json":
             self._send(200, "application/json", b'{"openapi":"3.0.0","paths":{}}')
         elif path == "/api/users":
-            self._send(200, "application/json",
-                       b'[{"id":1,"name":"alice","password_hash":"$2b$10$abc","ssn":"111-22-3333"}]')
+            self._send(
+                200,
+                "application/json",
+                b'[{"id":1,"name":"alice","password_hash":"$2b$10$abc","ssn":"111-22-3333"}]',
+            )
         elif path == "/nosql":
             body = "<html><body>ok</body></html>"
             if any(c in q for c in ('"', "{", "\\")):
@@ -71,9 +76,12 @@ class _VulnHandler(BaseHTTPRequestHandler):
                 self._send(200, "text/html", "<html><body>ok</body></html>")
         elif path.startswith("/oscan-nonexistent"):
             # Verbose error / stack trace.
-            self._send(500, "text/html",
-                       "<html><body><h2>Werkzeug Debugger</h2>"
-                       "Traceback (most recent call last):\n  File app.py line 42</body></html>")
+            self._send(
+                500,
+                "text/html",
+                "<html><body><h2>Werkzeug Debugger</h2>"
+                "Traceback (most recent call last):\n  File app.py line 42</body></html>",
+            )
         elif path == "/blind":
             # Pure blind SQLi: a sleep payload delays the response, but nothing is
             # reflected and no SQL error is ever returned.
@@ -114,8 +122,12 @@ def vuln_server():
 
 
 def _ctx(url):
-    ctx = ScanContext(target=Target(url=url), http=HttpClient(min_interval=0.0),
-                      profile="active", intrusive_allowed=True)
+    ctx = ScanContext(
+        target=Target(url=url),
+        http=HttpClient(min_interval=0.0),
+        profile="active",
+        intrusive_allowed=True,
+    )
     return ctx
 
 
@@ -126,8 +138,8 @@ def test_weak_headers_and_cookies(vuln_server):
         cookie_ids = {f.id for f in check_cookies(ctx)}
     finally:
         ctx.http.close()
-    assert "HDR-004" in hdr_ids          # missing CSP
-    assert "COOKIE-002" in cookie_ids    # missing HttpOnly
+    assert "HDR-004" in hdr_ids  # missing CSP
+    assert "COOKIE-002" in cookie_ids  # missing HttpOnly
 
 
 def test_reflected_xss_and_sql_detected(vuln_server):
@@ -188,8 +200,8 @@ def test_api_docs_and_verbose_errors(vuln_server):
         err_ids = {f.id for f in check_verbose_errors(ctx)}
     finally:
         ctx.http.close()
-    assert "API-001" in doc_ids     # exposed swagger.json
-    assert "API-004" in err_ids     # stack trace
+    assert "API-001" in doc_ids  # exposed swagger.json
+    assert "API-004" in err_ids  # stack trace
 
 
 def test_excessive_data_exposure(vuln_server):

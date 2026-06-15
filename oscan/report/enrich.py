@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 import os
-from typing import List
 
 from ..core.finding import Finding, Severity
 
@@ -38,7 +37,7 @@ def _enabled() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
-def enrich_findings(findings: List[Finding]) -> None:
+def enrich_findings(findings: list[Finding]) -> None:
     """Fill `enrichment` on each real finding in place. Silent no-op on any problem."""
     if not _enabled():
         return
@@ -52,8 +51,7 @@ def enrich_findings(findings: List[Finding]) -> None:
         return
 
     payload = [
-        {"id": f.id, "title": f.title, "severity": f.severity.value, "why": f.why}
-        for f in targets
+        {"id": f.id, "title": f.title, "severity": f.severity.value, "why": f.why} for f in targets
     ]
 
     try:
@@ -96,7 +94,7 @@ def _parse(text: str) -> dict:
     if start == -1 or end == -1:
         return {}
     try:
-        data = json.loads(text[start:end + 1])
+        data = json.loads(text[start : end + 1])
     except json.JSONDecodeError:
         return {}
     out = {}

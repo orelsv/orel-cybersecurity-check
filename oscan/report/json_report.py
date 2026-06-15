@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import json
 import time
-from typing import List
 
 from ..core.finding import Finding
 from ..core.scoring import ScanSummary
 
 
-def build(target: str, profile: str, summary: ScanSummary, findings: List[Finding], meta: dict | None = None) -> dict:
+def build(
+    target: str,
+    profile: str,
+    summary: ScanSummary,
+    findings: list[Finding],
+    meta: dict | None = None,
+) -> dict:
     return {
         "tool": "oscan",
         "version": "0.1.0",

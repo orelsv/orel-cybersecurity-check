@@ -31,11 +31,11 @@ def test_trackers_and_fonts_without_consent_flagged():
     )
     f = check_gdpr(ctx)
     got = ids(f)
-    assert "GDPR-001" in got   # tracking cookie before consent
-    assert "GDPR-002" in got   # third-party tracker
-    assert "GDPR-003" in got   # google fonts
-    assert "GDPR-004" in got   # no consent banner
-    assert "GDPR-005" in got   # no privacy policy
+    assert "GDPR-001" in got  # tracking cookie before consent
+    assert "GDPR-002" in got  # third-party tracker
+    assert "GDPR-003" in got  # google fonts
+    assert "GDPR-004" in got  # no consent banner
+    assert "GDPR-005" in got  # no privacy policy
 
 
 def test_consent_and_privacy_pass():

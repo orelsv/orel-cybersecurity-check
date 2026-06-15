@@ -19,9 +19,9 @@ from __future__ import annotations
 import json
 import os
 import time
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable
 from urllib.parse import urlparse
 
 PROFILES = ("passive", "standard", "active")
@@ -33,9 +33,18 @@ INTRUSIVE_FROM = "active"
 # Obvious third-party hosts we refuse to actively probe even with the flag set,
 # to make accidental misuse against someone else's property harder.
 _BLOCKED_ACTIVE_HOSTS = {
-    "google.com", "www.google.com", "facebook.com", "www.facebook.com",
-    "microsoft.com", "login.microsoftonline.com", "github.com", "amazon.com",
-    "apple.com", "cloudflare.com", "openai.com", "anthropic.com",
+    "google.com",
+    "www.google.com",
+    "facebook.com",
+    "www.facebook.com",
+    "microsoft.com",
+    "login.microsoftonline.com",
+    "github.com",
+    "amazon.com",
+    "apple.com",
+    "cloudflare.com",
+    "openai.com",
+    "anthropic.com",
 }
 
 
@@ -50,8 +59,8 @@ class ScopeError(Exception):
 def profile_rank(profile: str) -> int:
     try:
         return _PROFILE_ORDER[profile]
-    except KeyError:
-        raise ValueError(f"unknown profile {profile!r}; choose one of {PROFILES}")
+    except KeyError as err:
+        raise ValueError(f"unknown profile {profile!r}; choose one of {PROFILES}") from err
 
 
 def is_intrusive(profile: str) -> bool:
@@ -130,8 +139,11 @@ def authorize(
     Raises AuthorizationError or ScopeError on refusal.
     """
     if not is_intrusive(profile):
-        return AuthDecision(intrusive_allowed=False, profile=profile,
-                            reason="non-intrusive profile; observation only")
+        return AuthDecision(
+            intrusive_allowed=False,
+            profile=profile,
+            reason="non-intrusive profile; observation only",
+        )
 
     if not authorized:
         raise AuthorizationError(
@@ -157,5 +169,9 @@ def authorize(
         raise AuthorizationError("Active scan declined at the confirmation prompt.")
 
     audit = write_audit(profile, targets, extra={"scope": scope or []})
-    return AuthDecision(intrusive_allowed=True, profile=profile,
-                        reason="authorized, in scope, confirmed", audit_path=audit)
+    return AuthDecision(
+        intrusive_allowed=True,
+        profile=profile,
+        reason="authorized, in scope, confirmed",
+        audit_path=audit,
+    )

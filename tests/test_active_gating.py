@@ -3,9 +3,9 @@ and must degrade gracefully when there is nothing to test."""
 
 from conftest import make_ctx
 
-from oscan.checks.injection import check_injection
 from oscan.checks.auth import check_admin_endpoints, check_login_lockout
 from oscan.checks.dos_resilience import check_dos_burst
+from oscan.checks.injection import check_injection
 from oscan.core.finding import Severity
 
 

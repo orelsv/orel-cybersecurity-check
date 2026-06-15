@@ -12,7 +12,6 @@ import socket
 import ssl
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 from urllib.parse import urlparse
 
 import httpx
@@ -22,16 +21,16 @@ DEFAULT_UA = "oscan/0.1 (+self-assessment; https://github.com/orelsv/orel-cybers
 
 @dataclass
 class TLSInfo:
-    version: Optional[str] = None
-    not_after: Optional[str] = None
-    subject: Optional[str] = None
-    error: Optional[str] = None
+    version: str | None = None
+    not_after: str | None = None
+    subject: str | None = None
+    error: str | None = None
 
 
 @dataclass
 class HttpClient:
     timeout: float = 10.0
-    min_interval: float = 0.3          # seconds between requests (global throttle)
+    min_interval: float = 0.3  # seconds between requests (global throttle)
     verify: bool = True
     user_agent: str = DEFAULT_UA
     _client: httpx.Client = field(init=False, repr=False)
@@ -53,11 +52,19 @@ class HttpClient:
             time.sleep(self.min_interval - delta)
         self._last = time.monotonic()
 
-    def get(self, url: str, *, follow_redirects: bool = False, params: dict | None = None,
-            headers: dict | None = None):
+    def get(
+        self,
+        url: str,
+        *,
+        follow_redirects: bool = False,
+        params: dict | None = None,
+        headers: dict | None = None,
+    ):
         self._throttle()
         self.request_count += 1
-        return self._client.get(url, follow_redirects=follow_redirects, params=params, headers=headers)
+        return self._client.get(
+            url, follow_redirects=follow_redirects, params=params, headers=headers
+        )
 
     def post(self, url: str, *, data: dict | None = None, follow_redirects: bool = False):
         self._throttle()
