@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project aims
 to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-06-15
+
+### Changed
+- README: add a tagline, a demo screenshot, and a highlights section, and use an
+  absolute image URL so it renders on PyPI as well as on GitHub.
+
 ## [0.1.2] - 2026-06-15
 
 ### Added
@@ -47,6 +53,7 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - GitHub Actions CI (`pytest` on Python 3.11-3.13, `ruff` lint/format) and a
   PyPI release workflow using Trusted Publishing.
 
+[0.1.3]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.3
 [0.1.2]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.2
 [0.1.1]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.1
 [0.1.0]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.0

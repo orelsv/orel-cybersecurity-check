@@ -13,7 +13,7 @@
 uvx --from orel-cybersecurity-check oscan https://your-site.example
 ```
 
-![oscan running an active scan against OWASP Juice Shop](screenshots/demo-juiceshop-active.png)
+![oscan running an active scan against OWASP Juice Shop](https://raw.githubusercontent.com/orelsv/orel-cybersecurity-check/main/screenshots/demo-juiceshop-active.png)
 
 A manual, **authorized self-assessment** scanner for the sites, web apps, and repos
 people increasingly build with AI. It catches the holes those builds ship with: SQL
