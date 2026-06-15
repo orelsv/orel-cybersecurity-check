@@ -9,7 +9,10 @@ oscan https://mysite.example --json out.json --md out.md
 from __future__ import annotations
 
 import argparse
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from rich.console import Console
@@ -40,6 +43,40 @@ def _looks_like_url(value: str) -> bool:
         return True
     # bare host like example.com (a dot, no path/space, not an existing path)
     return "." in value and "/" not in value and not Path(value).exists()
+
+
+_REMOTE_PREFIXES = ("http://", "https://", "git@", "ssh://", "git://", "file://")
+
+
+def _is_remote_repo(value: str) -> bool:
+    """True if --repo points at a remote git URL rather than a local path."""
+    if Path(value).exists():
+        return False
+    return value.startswith(_REMOTE_PREFIXES) or value.endswith(".git")
+
+
+def _clone_repo(url: str, console: Console) -> str | None:
+    """Clone a remote repo (full history) into a temp dir for scanning.
+
+    Returns the local path, or None if the clone failed. The caller owns the
+    directory and must remove it.
+    """
+    dest = tempfile.mkdtemp(prefix="oscan-clone-")
+    try:
+        subprocess.run(
+            ["git", "clone", "--quiet", url, dest],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        return dest
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+        shutil.rmtree(dest, ignore_errors=True)
+        detail = (getattr(exc, "stderr", "") or "").strip()
+        msg = detail.splitlines()[-1] if detail else str(exc)
+        console.print(f"[red]Could not clone[/red] {url}: {msg}")
+        return None
 
 
 def _load_scope(path: str | None) -> list[str] | None:
@@ -146,6 +183,15 @@ def main(argv: list[str] | None = None) -> int:
         console.print("[red]Provide a URL or a --repo path.[/red] See --help.")
         return 2
 
+    repo_label = repo
+    clone_dir = None
+    if repo and _is_remote_repo(repo):
+        console.print(f"[dim]Cloning {repo} ...[/dim]")
+        clone_dir = _clone_repo(repo, console)
+        if not clone_dir:
+            return 4
+        repo = clone_dir
+
     targets = [t for t in (url,) if t]
     scope = _load_scope(args.scope)
 
@@ -155,7 +201,7 @@ def main(argv: list[str] | None = None) -> int:
             authorize(
                 args.profile,
                 authorized=args.authorized,
-                targets=targets or [repo or "local"],
+                targets=targets or [repo_label or "local"],
                 scope=scope,
                 confirm=lambda: _confirm_active(console, targets, args.yes),
             )
@@ -183,6 +229,8 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         if http:
             http.close()
+        if clone_dir:
+            shutil.rmtree(clone_dir, ignore_errors=True)
 
     # Optional Claude enrichment (no-op without the package or an API key).
     if not args.no_enrich:
@@ -194,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
             pass
 
     summary = summarize(findings)
-    label = url or repo
+    label = url or repo_label
     console_report.render(console, label, args.profile, summary, findings)
 
     if args.json_path:

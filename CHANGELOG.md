@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project aims
 to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-06-15
+
+### Added
+- `--repo` now accepts a remote git URL (https/ssh/git). The repo is cloned to
+  a temporary directory, scanned (secrets + full history), and then removed.
+
+### Fixed
+- `--repo <url>` previously treated the URL as a local path and reported a
+  misleading "No .gitignore file" instead of scanning the repository.
+
 ## [0.1.1] - 2026-06-15
 
 ### Added
@@ -37,5 +47,6 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - GitHub Actions CI (`pytest` on Python 3.11-3.13, `ruff` lint/format) and a
   PyPI release workflow using Trusted Publishing.
 
+[0.1.2]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.2
 [0.1.1]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.1
 [0.1.0]: https://github.com/orelsv/orel-cybersecurity-check/releases/tag/v0.1.0

@@ -74,6 +74,9 @@ oscan https://your-site.example
 # Scan a local repo for secrets in the working tree AND git history
 oscan --repo /path/to/your-repo
 
+# Scan a remote repo by URL (cloned to a temp dir, then removed)
+oscan --repo https://github.com/org/project
+
 # Write machine + human reports
 oscan https://your-site.example --json report.json --md report.md
 

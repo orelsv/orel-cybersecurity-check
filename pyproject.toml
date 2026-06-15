@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orel-cybersecurity-check"
-version = "0.1.1"
+version = "0.1.2"
 description = "oscan - a manual, authorized self-assessment scanner for web apps and sites (vulnerabilities + GDPR), with secure-by-default guidance."
 readme = "README.md"
 requires-python = ">=3.11"
