@@ -109,17 +109,22 @@ Drive the **`oscan`** scanner (in this repo), then interpret the results in
 plain language and produce a prioritized fix list.
 
 **Decide the profile (always start safe):**
-- `passive` (default) - observation only, safe to run on any URL you own.
-- `standard` - adds path enumeration and JWT analysis.
-- `active` - intrusive but non-destructive probes (SQLi/XSS markers, auth-lockout,
+- `passive` (default) - observation only (TLS, headers, cookies, exposed files,
+  GDPR/privacy, and repo secrets/git history). Safe to run on any URL you own.
+- `standard` - adds non-intrusive analysis: CORS, API docs/excessive-data/verbose
+  errors, JWT hygiene, and rate-limit headers. Still GET-only observation.
+- `active` - intrusive but non-destructive probes (injection markers for
+  SQLi/NoSQLi/XSS/traversal/SSRF, admin-endpoint checks, login lockout, a capped
   DoS-resilience burst). Requires `--i-am-authorized` + confirmation. Only on the
   user's own/authorized targets.
 
-**Typical invocations:**
+**Typical invocations** (verify flags with `oscan --help` - see Rules):
 ```bash
-oscan https://their-site.example                          # passive, safe default
-oscan --repo /path/to/their-repo                          # secrets + git history scan
-oscan https://their-site.example --gdpr --md report.md    # privacy-focused, Markdown report
+oscan https://their-site.example                          # passive, safe default (GDPR/privacy included)
+oscan https://their-site.example --md report.md           # passive + Markdown report
+oscan --repo /path/to/their-repo                          # local secrets + git-history scan
+oscan --repo https://github.com/owner/name.git            # clone a remote repo, scan, clean up
+oscan https://their-site.example --profile standard       # + CORS, API, JWT, rate-limit headers
 oscan https://their-site.example --profile active --i-am-authorized --json out.json
 ```
 
@@ -141,6 +146,10 @@ resilience burst (active), and GDPR/privacy (consent, trackers, fonts, privacy p
 4. Offer to write an Obsidian note documenting the audit.
 
 ## Rules
+- **`oscan --help` is the source of truth** for the exact flags and `--profile`
+  levels - they evolve between releases. Run it before building a command rather
+  than trusting the examples above; if an example here disagrees with `--help`,
+  `--help` wins (and fix this file).
 - Never invent findings. If the scan is clean, say so and suggest defense-in-depth.
 - Always explain WHY in plain language - the user is learning.
 - Confirm authorization before any `active` scan; default to `passive`.
